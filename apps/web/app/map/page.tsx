@@ -1,6 +1,4 @@
-import dynamic from "next/dynamic";
-
-const MapView = dynamic(() => import("./MapView"), { ssr: false });
+import MapShell from "./MapShell";
 
 export default function MapPage() {
   return (
@@ -14,7 +12,7 @@ export default function MapPage() {
         <div className="map-status"><span /> SYSTEM ONLINE</div>
       </header>
       <section className="map-card">
-        <MapView />
+        <MapShell />
       </section>
     </main>
   );
