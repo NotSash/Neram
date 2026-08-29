@@ -2,7 +2,7 @@ import { findUpcomingSignal, type GeoPoint, type RoutedSignal } from "./upcoming
 
 export type AlertDecision = {
   shouldAlert: boolean;
-  reason: "no_signal" | "too_far" | "approaching" | "already_reached";
+  reason: "no_signal" | "too_far" | "approaching";
   signal: RoutedSignal | null;
   distanceToSignalMeters: number | null;
   estimatedEtaSeconds: number | null;
@@ -27,23 +27,15 @@ export function evaluateSignalAlert(
     };
   }
 
-  const distance = candidate.routeProgressMeters;
-  if (distance <= 0) {
-    return {
-      shouldAlert: false,
-      reason: "already_reached",
-      signal: candidate.signal,
-      distanceToSignalMeters: 0,
-      estimatedEtaSeconds: 0,
-    };
-  }
-
+  const distance = candidate.distanceAheadMeters;
+  const shouldAlert = distance <= triggerDistanceMeters;
   const eta = speedMps && speedMps > 1 ? Math.round(distance / speedMps) : null;
+
   return {
-    shouldAlert: distance <= triggerDistanceMeters,
-    reason: distance <= triggerDistanceMeters ? "approaching" : "too_far",
+    shouldAlert,
+    reason: shouldAlert ? "approaching" : "too_far",
     signal: candidate.signal,
-    distanceToSignalMeters: Math.round(distance),
+    distanceToSignalMeters: Math.max(0, Math.round(distance)),
     estimatedEtaSeconds: eta,
   };
 }
