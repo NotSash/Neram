@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDrivingRoute } from "../../../../lib/valhalla";
+import { getDrivingRoute } from "../../../lib/valhalla";
 
 type Body = {
   locations?: Array<{ lat?: number; lon?: number }>;
