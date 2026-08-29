@@ -9,7 +9,6 @@ function projectPointToSegmentMeters(point: GeoPoint, start: GeoPoint, end: GeoP
   const referenceLat = (start.latitude + end.latitude + point.latitude) / 3;
   const metersPerDegreeLat = 111_320;
   const metersPerDegreeLon = 111_320 * Math.cos((referenceLat * Math.PI) / 180);
-
   const px = (point.longitude - start.longitude) * metersPerDegreeLon;
   const py = (point.latitude - start.latitude) * metersPerDegreeLat;
   const sx = (end.longitude - start.longitude) * metersPerDegreeLon;
@@ -69,13 +68,14 @@ export function findUpcomingSignal(
         signal,
         routeOffsetMeters: projection.distanceMeters,
         routeProgressMeters: projection.progressMeters,
+        distanceAheadMeters: projection.progressMeters - ambulanceProjection.progressMeters,
       };
     })
     .filter((candidate): candidate is NonNullable<typeof candidate> => candidate !== null)
-    .filter(({ routeOffsetMeters, routeProgressMeters }) =>
-      routeOffsetMeters <= maxOffsetMeters && routeProgressMeters > ambulanceProjection.progressMeters,
+    .filter(({ routeOffsetMeters, distanceAheadMeters }) =>
+      routeOffsetMeters <= maxOffsetMeters && distanceAheadMeters > 0,
     )
-    .sort((a, b) => a.routeProgressMeters - b.routeProgressMeters);
+    .sort((a, b) => a.distanceAheadMeters - b.distanceAheadMeters);
 
   return candidates[0] ?? null;
 }
