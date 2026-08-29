@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { evaluateSignalAlert, findUpcomingSignal } from "@neram/geo";
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -46,21 +47,37 @@ export default function MapView() {
   const [routeStatus, setRouteStatus] = useState<"routing" | "live" | "fallback">("routing");
 
   const position = route[Math.min(index, route.length - 1)];
+  const line = route.map((point) => [point.latitude, point.longitude] as [number, number]);
   const progress = route.length > 1 ? (index / (route.length - 1)) * 100 : 0;
-  const distanceRemaining = Math.max(0, Math.round(((route.length - 1 - index) / Math.max(route.length - 1, 1)) * 840));
-  const etaSeconds = Math.max(0, Math.round((route.length - 1 - index) * 18));
-  const currentSignalIndex = Math.min(Math.floor(index / Math.max(1, Math.ceil(route.length / DEMO_SIGNALS.length))), DEMO_SIGNALS.length - 1);
+  const speedMps = 13.9;
 
-  const signals = useMemo(
-    () => DEMO_SIGNALS.map((signal, signalIndex) => ({
-      ...signal,
-      status: signalIndex < currentSignalIndex ? "passed" : signalIndex === currentSignalIndex ? "next" : "upcoming",
-    } as Signal)),
-    [currentSignalIndex],
+  const upcoming = findUpcomingSignal(
+    route,
+    position,
+    DEMO_SIGNALS.map(({ id, name, latitude, longitude }) => ({ id, name, latitude, longitude })),
+    160,
   );
 
-  const currentSignal = signals.find((signal) => signal.status === "next") ?? signals.at(-1)!;
-  const line = route.map((point) => [point.latitude, point.longitude] as [number, number]);
+  const alertDecision = evaluateSignalAlert(
+    route,
+    position,
+    DEMO_SIGNALS.map(({ id, name, latitude, longitude }) => ({ id, name, latitude, longitude })),
+    speedMps,
+    500,
+  );
+
+  const signals = useMemo(() => {
+    const nextId = upcoming?.signal.id;
+    return DEMO_SIGNALS.map((signal) => ({
+      ...signal,
+      status: signal.id === nextId ? "next" : signal.id === upcoming?.signal.id ? "next" : "upcoming",
+    } as Signal));
+  }, [upcoming?.signal.id]);
+
+  const nextSignal = signals.find((signal) => signal.status === "next") ?? signals[0];
+  const distanceToSignal = alertDecision.distanceToSignalMeters ?? upcoming?.distanceAheadMeters ?? null;
+  const etaSeconds = alertDecision.estimatedEtaSeconds ?? (distanceToSignal ? Math.round(distanceToSignal / speedMps) : 0);
+  const atFinal = index >= route.length - 1;
 
   useEffect(() => {
     let active = true;
@@ -121,8 +138,8 @@ export default function MapView() {
             center={[item.latitude, item.longitude]}
             radius={item.status === "next" ? 10 : 7}
             pathOptions={{
-              color: item.status === "passed" ? "#43d19e" : item.status === "next" ? "#ff4d5f" : "#6f7d91",
-              fillColor: item.status === "passed" ? "#43d19e" : item.status === "next" ? "#ff4d5f" : "#6f7d91",
+              color: item.status === "next" ? "#ff4d5f" : "#6f7d91",
+              fillColor: item.status === "next" ? "#ff4d5f" : "#6f7d91",
               fillOpacity: 0.95,
               weight: 2,
             }}
@@ -141,25 +158,35 @@ export default function MapView() {
           <strong>AMB-DEMO-01</strong>
           <span>{routeStatus === "live" ? "OSM / Valhalla route" : routeStatus === "routing" ? "Calculating road route…" : "Demo fallback route"}</span>
         </div>
-        <div className="map-kpi"><strong>{etaSeconds}s</strong><span>ETA to next signal</span></div>
+        <div className="map-kpi"><strong>{etaSeconds}s</strong><span>ETA to {alertDecision.signal?.name ?? nextSignal?.name ?? "next signal"}</span></div>
       </div>
+
+      {alertDecision.shouldAlert && (
+        <div className="map-alert-banner" role="status">
+          <span className="alert-pulse" /> <strong>POLICE ALERT WINDOW OPEN</strong>
+          <span>{alertDecision.signal?.name} · {alertDecision.estimatedEtaSeconds ?? "—"}s away</span>
+        </div>
+      )}
 
       <div className="map-overlay map-overlay-bottom">
         <div className="map-progress"><span style={{ width: `${progress}%` }} /></div>
         <div className="map-bottom-row">
-          <div><b>Next signal</b><span>{currentSignal.name}</span></div>
-          <div><b>{distanceRemaining} m</b><span>estimated remaining</span></div>
-          <button type="button" className="map-control" onClick={() => { if (index >= route.length - 1) setIndex(0); setRunning((value) => !value); }}>{running ? "Pause" : index >= route.length - 1 ? "Replay" : "Resume"}</button>
+          <div><b>Next signal</b><span>{nextSignal?.name ?? "Route complete"}</span></div>
+          <div><b>{distanceToSignal ?? "—"} m</b><span>route distance ahead</span></div>
+          <button type="button" className="map-control" onClick={() => {
+            if (atFinal) setIndex(0);
+            setRunning((value) => !value || atFinal);
+          }}>{running ? "Pause" : atFinal ? "Replay" : "Resume"}</button>
         </div>
       </div>
 
       <div className="map-legend">
         <span><i className="legend-dot ambulance" /> Ambulance</span>
         <span><i className="legend-dot signal" /> Next signal</span>
-        <span><i className="legend-dot passed" /> Passed</span>
+        <span><i className="legend-dot passed" /> Other signal</span>
         <span><i className="legend-line" /> Route</span>
       </div>
-      <div className="map-disclaimer">Training simulation · Demo geometry only</div>
+      <div className="map-disclaimer">Training simulation · Demo geometry only · Police alert is advisory</div>
     </div>
   );
 }
