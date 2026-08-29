@@ -1,5 +1,6 @@
 "use client";
 
+import "./dashboard.css";
 import { useMemo, useState } from "react";
 
 const DEMO_ALERTS = [
