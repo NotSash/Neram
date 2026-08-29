@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { evaluateSignalAlert } from "../../../../../packages/geo/src/alert-decision";
+import { allowRequest } from "../../../../lib/rate-limit";
 
 const DEMO_ROUTE = [
   { latitude: 13.0458, longitude: 80.2079 },
@@ -20,7 +21,16 @@ const DEMO_SIGNALS = [
   { id: "signal-c", name: "Demo Signal C", latitude: 13.0522, longitude: 80.2148 },
 ];
 
+function isChennaiCoordinate(latitude: number, longitude: number) {
+  return latitude >= 12.7 && latitude <= 13.35 && longitude >= 79.95 && longitude <= 80.45;
+}
+
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (!allowRequest(`ambulance-update:${ip}`)) {
+    return NextResponse.json({ error: "Too many updates. Try again shortly." }, { status: 429 });
+  }
+
   try {
     const body = (await request.json()) as {
       latitude?: number;
@@ -32,16 +42,21 @@ export async function POST(request: NextRequest) {
       typeof body.latitude !== "number" ||
       typeof body.longitude !== "number" ||
       !Number.isFinite(body.latitude) ||
-      !Number.isFinite(body.longitude)
+      !Number.isFinite(body.longitude) ||
+      !isChennaiCoordinate(body.latitude, body.longitude)
     ) {
-      return NextResponse.json({ error: "latitude and longitude are required" }, { status: 400 });
+      return NextResponse.json({ error: "Valid Chennai latitude and longitude are required" }, { status: 400 });
     }
+
+    const speedMps = typeof body.speedMps === "number" && Number.isFinite(body.speedMps)
+      ? Math.max(0, Math.min(body.speedMps, 80))
+      : 13.9;
 
     const decision = evaluateSignalAlert(
       DEMO_ROUTE,
       { latitude: body.latitude, longitude: body.longitude },
       DEMO_SIGNALS,
-      typeof body.speedMps === "number" ? body.speedMps : 13.9,
+      speedMps,
       500,
     );
 
@@ -49,6 +64,7 @@ export async function POST(request: NextRequest) {
       ambulanceId: "AMB-DEMO-01",
       decision,
       mode: "simulation",
+      receivedAt: new Date().toISOString(),
     });
   } catch (error) {
     console.error("Neram ambulance update error", error);
