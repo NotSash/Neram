@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { DEMO_AMBULANCE_ROUTE, DEMO_SIGNALS, getNextSignal } from '../../../../packages/geo/src/simulation';
 import { initialBearingDegrees } from '../../../../packages/geo/src/bearing';
 
+const fmtEta = (seconds: number) => seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+
 export default function SimulatorPage() {
   const [index, setIndex] = useState(0);
   const [running, setRunning] = useState(false);
@@ -11,58 +13,72 @@ export default function SimulatorPage() {
   const nextPoint = DEMO_AMBULANCE_ROUTE[Math.min(index + 1, DEMO_AMBULANCE_ROUTE.length - 1)];
   const bearing = useMemo(() => initialBearingDegrees(current, nextPoint), [current, nextPoint]);
   const nextSignal = getNextSignal(current, DEMO_AMBULANCE_ROUTE.slice(index + 1), DEMO_SIGNALS);
+  const demoSpeedMps = 11;
+  const eta = nextSignal ? Math.max(1, Math.round(nextSignal.distanceFromCurrent / demoSpeedMps)) : null;
+  const urgent = eta !== null && eta <= 45;
 
   useEffect(() => {
     if (!running) return;
     const timer = window.setInterval(() => {
       setIndex((value) => {
-        if (value >= DEMO_AMBULANCE_ROUTE.length - 1) {
-          setRunning(false);
-          return value;
-        }
+        if (value >= DEMO_AMBULANCE_ROUTE.length - 1) { setRunning(false); return value; }
         return value + 1;
       });
     }, 1500);
     return () => window.clearInterval(timer);
   }, [running]);
 
+  const start = () => { setIndex(0); setRunning(true); };
+
   return (
-    <main style={{ minHeight: '100vh', padding: 32 }}>
-      <section style={{ maxWidth: 900, margin: '0 auto' }}>
-        <p style={{ fontSize: 12, letterSpacing: 2, opacity: 0.65 }}>NERAM / SIMULATION</p>
-        <h1 style={{ margin: '8px 0 4px' }}>Ambulance alert pipeline</h1>
-        <p style={{ opacity: 0.7 }}>Demo fixtures only. Signal coordinates are not production Chennai data.</p>
+    <main className="sim-shell">
+      <header className="topbar">
+        <div className="brand"><span className="brand-mark">N</span><span>Neram</span></div>
+        <div className="top-status"><span className="live-dot" /> SIMULATION · CHENNAI</div>
+      </header>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 24 }}>
-          <article style={{ border: '1px solid #26324f', borderRadius: 16, padding: 20 }}>
-            <h2 style={{ marginTop: 0 }}>AMB-DEMO-01</h2>
-            <p><strong>Status:</strong> ACTIVE</p>
-            <p><strong>GPS sample:</strong> {index + 1} / {DEMO_AMBULANCE_ROUTE.length}</p>
-            <p><strong>Heading:</strong> {Math.round(bearing)}°</p>
-            <p><strong>Location:</strong> {current.latitude.toFixed(5)}, {current.longitude.toFixed(5)}</p>
-            <button onClick={() => { setIndex(0); setRunning(true); }} style={{ marginTop: 12, padding: '10px 14px' }}>
-              Start simulation
-            </button>
+      <section className="content">
+        <div className="eyebrow">TRAFFIC POLICE · TRAINING MODE</div>
+        <div className="title-row">
+          <div><h1>Emergency approach</h1><p>See how Neram turns a live ambulance position into a signal alert.</p></div>
+          <button className="start-button" onClick={start}>{running ? 'Restart simulation' : 'Start simulation'}</button>
+        </div>
+
+        <div className="alert-card" data-urgent={urgent}>
+          <div className="alert-icon">!</div>
+          <div className="alert-copy">
+            <div className="alert-kicker">{urgent ? 'ACTION WINDOW' : 'UPCOMING AMBULANCE'}</div>
+            <h2>AMB-DEMO-01 approaching</h2>
+            <p>{nextSignal?.signal.name ?? 'No upcoming signal detected'}</p>
+          </div>
+          <div className="eta"><strong>{eta !== null ? fmtEta(eta) : '—'}</strong><span>estimated arrival</span></div>
+          <div className="alert-state">{urgent ? 'PREPARE' : 'MONITORING'}</div>
+        </div>
+
+        <div className="grid">
+          <article className="panel route-panel">
+            <div className="panel-head"><div><span className="label">LIVE ROUTE</span><h3>Ambulance movement</h3></div><span className="active-pill">● ACTIVE</span></div>
+            <div className="route-visual">
+              <div className="road-line" />
+              {DEMO_SIGNALS.map((signal, i) => <div className={`signal-node ${i === index ? 'passed' : ''}`} key={signal.id} style={{ left: `${18 + i * 31}%` }}><span>✦</span><small>{signal.name}</small></div>)}
+              <div className="ambulance-marker" style={{ left: `${8 + (index / (DEMO_AMBULANCE_ROUTE.length - 1)) * 82}%` }}>🚑</div>
+            </div>
+            <div className="route-meta"><span>Heading <b>{Math.round(bearing)}°</b></span><span>GPS sample <b>{index + 1}/{DEMO_AMBULANCE_ROUTE.length}</b></span><span>Tracking <b>Healthy</b></span></div>
           </article>
 
-          <article style={{ border: '1px solid #26324f', borderRadius: 16, padding: 20 }}>
-            <h2 style={{ marginTop: 0 }}>Next signal</h2>
-            {nextSignal ? (
-              <>
-                <p style={{ fontSize: 24, marginBottom: 8 }}>{nextSignal.signal.name}</p>
-                <p>Distance: <strong>{Math.round(nextSignal.distanceFromCurrent)} m</strong></p>
-                <p>Route proximity: <strong>{Math.round(nextSignal.nearestRouteDistance)} m</strong></p>
-                <p style={{ marginBottom: 0 }}>Police alert: <strong>{nextSignal.distanceFromCurrent < 500 ? 'READY TO TRIGGER' : 'NOT YET'}</strong></p>
-              </>
-            ) : <p>No upcoming signal.</p>}
+          <article className="panel signal-panel">
+            <div className="panel-head"><div><span className="label">NEXT SIGNAL</span><h3>{nextSignal?.signal.name ?? 'None'}</h3></div></div>
+            {nextSignal ? <>
+              <div className="metric"><span>Distance</span><strong>{Math.round(nextSignal.distanceFromCurrent)} m</strong></div>
+              <div className="metric"><span>Estimated arrival</span><strong>{eta !== null ? fmtEta(eta) : '—'}</strong></div>
+              <div className="metric"><span>Approach</span><strong>{Math.round(bearing)}° · forward</strong></div>
+              <div className="confidence"><span>Route confidence</span><strong>96%</strong><div><i style={{ width: '96%' }} /></div></div>
+            </> : <p className="empty">The simulation has no signal ahead.</p>}
           </article>
         </div>
 
-        <div style={{ marginTop: 24, border: '1px solid #26324f', borderRadius: 16, padding: 20 }}>
-          <h2 style={{ marginTop: 0 }}>Pipeline</h2>
-          <p>Ambulance GPS → route candidate → upcoming signal → police alert</p>
-          <p style={{ opacity: 0.65 }}>The next iteration will replace the fixture route with proper road-aware matching and ETA.</p>
-        </div>
+        <div className="pipeline"><span>GPS</span><b>→</b><span>Route</span><b>→</b><span>Next signal</span><b>→</b><strong>Police alert</strong></div>
+        <p className="demo-note">Demo coordinates only. No real Chennai signal or police assignment data is used here.</p>
       </section>
     </main>
   );
