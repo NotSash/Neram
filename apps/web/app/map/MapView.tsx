@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -29,7 +29,11 @@ const ROUTE: Point[] = [
 function MapController({ position }: { position: Point }) {
   const map = useMap();
   useEffect(() => {
-    map.setView([position.latitude, position.longitude], map.getZoom(), { animate: true, duration: 0.45 });
+    const center = map.getCenter();
+    const distance = Math.hypot(center.lat - position.latitude, center.lng - position.longitude);
+    if (distance > 0.0012) {
+      map.panTo([position.latitude, position.longitude], { animate: true, duration: 0.45 });
+    }
   }, [map, position.latitude, position.longitude]);
   return null;
 }
@@ -38,16 +42,28 @@ export default function MapView() {
   const [index, setIndex] = useState(0);
   const [running, setRunning] = useState(true);
   const position = ROUTE[index];
-  const nextSignalIndex = DEMO_SIGNALS.findIndex((signal) => signal.status === "next");
-  const signal = DEMO_SIGNALS[Math.min(Math.floor(index / 3), DEMO_SIGNALS.length - 1)];
+
+  const signalProgress = useMemo(() => {
+    const thresholds = [2, 6, 9];
+    return thresholds.map((threshold, signalIndex) => ({ threshold, signalIndex }));
+  }, []);
+
+  const currentSignalIndex = useMemo(() => {
+    const next = signalProgress.find(({ threshold }) => index < threshold);
+    return next?.signalIndex ?? DEMO_SIGNALS.length - 1;
+  }, [index, signalProgress]);
+
   const remainingSignals = DEMO_SIGNALS.map((item, signalIndex) => ({
     ...item,
-    status: signalIndex < Math.floor(index / 3) ? "passed" : signalIndex === nextSignalIndex ? "next" : "upcoming",
+    status: signalIndex < currentSignalIndex ? "passed" : signalIndex === currentSignalIndex ? "next" : "upcoming",
   } as Signal));
+
+  const nextSignal = remainingSignals[currentSignalIndex];
   const line = ROUTE.map((point) => [point.latitude, point.longitude] as [number, number]);
   const progress = (index / (ROUTE.length - 1)) * 100;
   const distanceRemaining = Math.max(0, Math.round(((ROUTE.length - 1 - index) / (ROUTE.length - 1)) * 840));
-  const etaSeconds = Math.max(0, Math.round(((ROUTE.length - 1 - index) * 18)));
+  const etaSeconds = Math.max(0, Math.round((ROUTE.length - 1 - index) * 18));
+  const atFinal = index >= ROUTE.length - 1;
 
   useEffect(() => {
     if (!running) return;
@@ -85,7 +101,7 @@ export default function MapView() {
           </CircleMarker>
         ))}
         <CircleMarker center={[position.latitude, position.longitude]} radius={11} pathOptions={{ color: "#ffffff", fillColor: "#111827", fillOpacity: 1, weight: 3 }}>
-          <Tooltip direction="top" permanent>🚑 AMB-DEMO-01</Tooltip>
+          <Tooltip direction="top" permanent>AMB-DEMO-01</Tooltip>
         </CircleMarker>
       </MapContainer>
 
@@ -93,24 +109,27 @@ export default function MapView() {
         <div>
           <span className="map-overline">ACTIVE EMERGENCY · TRAINING</span>
           <strong>AMB-DEMO-01</strong>
-          <span>Route simulation in progress</span>
+          <span>{running ? "Route simulation in progress" : atFinal ? "Simulation complete" : "Simulation paused"}</span>
         </div>
-        <div className="map-kpi"><strong>{etaSeconds}s</strong><span>ETA to next checkpoint</span></div>
+        <div className="map-kpi"><strong>{etaSeconds}s</strong><span>ETA to next signal</span></div>
       </div>
 
       <div className="map-overlay map-overlay-bottom">
         <div className="map-progress"><span style={{ width: `${progress}%` }} /></div>
         <div className="map-bottom-row">
-          <div><b>Next signal</b><span>{signal.name}</span></div>
+          <div><b>Next signal</b><span>{nextSignal?.name ?? "Route complete"}</span></div>
           <div><b>{distanceRemaining} m</b><span>estimated remaining</span></div>
-          <button type="button" className="map-control" onClick={() => { if (index >= ROUTE.length - 1) setIndex(0); setRunning((value) => !value); }}>{running ? "Pause" : index >= ROUTE.length - 1 ? "Replay" : "Resume"}</button>
+          <button type="button" className="map-control" onClick={() => {
+            if (atFinal) setIndex(0);
+            setRunning((value) => !value || atFinal);
+          }}>{running ? "Pause" : atFinal ? "Replay" : "Resume"}</button>
         </div>
       </div>
 
       <div className="map-legend">
         <span><i className="legend-dot ambulance" /> Ambulance</span>
         <span><i className="legend-dot signal" /> Next signal</span>
-        <span><i className="legend-dot" style={{ background: "#43d19e" }} /> Passed</span>
+        <span><i className="legend-dot passed" /> Passed</span>
         <span><i className="legend-line" /> Route</span>
       </div>
       <div className="map-disclaimer">Training simulation · Demo geometry only</div>
