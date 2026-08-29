@@ -20,17 +20,42 @@ export const DEMO_AMBULANCE_ROUTE: GeoPoint[] = [
   { latitude: 13.0527, longitude: 80.2153 },
 ];
 
-export function getNextSignal(current: GeoPoint, remainingRoute: GeoPoint[], signals: DemoSignal[], lookAheadMeters = 2000) {
+function nearestRouteIndex(signal: DemoSignal, route: GeoPoint[]): number {
+  let bestIndex = 0;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  route.forEach((point, index) => {
+    const distance = haversineDistanceMeters(point, signal);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestIndex = index;
+    }
+  });
+  return bestIndex;
+}
+
+export function getNextSignal(
+  current: GeoPoint,
+  remainingRoute: GeoPoint[],
+  signals: DemoSignal[],
+  lookAheadMeters = 2000,
+) {
+  const routeAhead = [current, ...remainingRoute];
+  const currentRouteIndex = 0;
+
   const candidates = signals
     .map((signal) => {
+      const routeIndex = nearestRouteIndex(signal, routeAhead);
       const distanceFromCurrent = haversineDistanceMeters(current, signal);
-      const nearestRouteDistance = Math.min(
-        ...remainingRoute.map((point) => haversineDistanceMeters(point, signal)),
-      );
-      return { signal, distanceFromCurrent, nearestRouteDistance };
+      const nearestRouteDistance = haversineDistanceMeters(routeAhead[routeIndex], signal);
+      return { signal, routeIndex, distanceFromCurrent, nearestRouteDistance };
     })
-    .filter((candidate) => candidate.distanceFromCurrent <= lookAheadMeters)
-    .sort((a, b) => a.distanceFromCurrent - b.distanceFromCurrent);
+    .filter(
+      (candidate) =>
+        candidate.routeIndex > currentRouteIndex &&
+        candidate.distanceFromCurrent <= lookAheadMeters &&
+        candidate.nearestRouteDistance <= 300,
+    )
+    .sort((a, b) => a.routeIndex - b.routeIndex || a.distanceFromCurrent - b.distanceFromCurrent);
 
   return candidates[0] ?? null;
 }
