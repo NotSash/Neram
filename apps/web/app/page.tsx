@@ -1,14 +1,3 @@
 export default function Home() {
-  return (
-    <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24 }}>
-      <section style={{ maxWidth: 720 }}>
-        <p style={{ letterSpacing: 3, fontSize: 12, opacity: 0.7 }}>CHENNAI EMERGENCY RESPONSE</p>
-        <h1 style={{ fontSize: 56, margin: '12px 0' }}>Neram</h1>
-        <p style={{ fontSize: 20, lineHeight: 1.5, opacity: 0.8 }}>
-          Giving traffic police time to prepare when an active ambulance approaches their signal.
-        </p>
-        <p style={{ marginTop: 28, opacity: 0.55 }}>Foundation build is ready.</p>
-      </section>
-    </main>
-  );
+  return <main className="home-shell"><nav className="home-nav"><div className="ops-brand"><span className="brand-mark">N</span><span>Neram</span><small>CHENNAI EMERGENCY NETWORK</small></div><div className="home-links"><a href="/police">Police console</a><a href="/map">Live map</a></div></nav><section className="home-hero"><div className="eyebrow">CHENNAI · EMERGENCY RESPONSE</div><h1>Give traffic police<br /><em>time to act.</em></h1><p>Neram alerts the right traffic-police unit when an active ambulance is approaching their signal.</p><div className="home-actions"><a className="home-primary" href="/police">Open police console <span>→</span></a><a className="home-secondary" href="/map">View training map</a></div><div className="home-note"><span className="live-dot" /> TRAINING ENVIRONMENT · NO SIGNAL CONTROL</div></section><section className="home-principles"><div><span>01</span><strong>Detect</strong><p>Verified ambulance sends live location during an active emergency trip.</p></div><div><span>02</span><strong>Predict</strong><p>Neram identifies the next relevant signal on the projected road route.</p></div><div><span>03</span><strong>Inform</strong><p>The assigned officer receives an early warning and decides what to do.</p></div></section></main>;
 }
