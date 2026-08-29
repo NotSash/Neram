@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { evaluateSignalAlert, findUpcomingSignal } from "@neram/geo";
+import { evaluateSignalAlert, findUpcomingSignal } from "../../lib/geo";
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { getSupabaseBrowserClient } from "../../lib/supabase/browser";
@@ -60,12 +60,11 @@ export default function MapView() {
 
   const signals = useMemo(() => {
     const nextId = upcoming?.signal.id;
-    const ambulancePassedProgress = upcoming?.distanceAheadMeters;
     return signalsBase.map((signal) => ({
       ...signal,
-      status: signal.id === nextId ? "next" : ambulancePassedProgress !== undefined && signal.id !== nextId ? "upcoming" : "upcoming",
+      status: signal.id === nextId ? "next" : "upcoming",
     } as Signal));
-  }, [signalsBase, upcoming?.signal.id, upcoming?.distanceAheadMeters]);
+  }, [signalsBase, upcoming?.signal.id]);
 
   const nextSignal = signals.find((signal) => signal.status === "next") ?? signals[0];
   const distanceToSignal = alertDecision.distanceToSignalMeters ?? upcoming?.distanceAheadMeters ?? null;
