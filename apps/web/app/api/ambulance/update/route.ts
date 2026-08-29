@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { evaluateSignalAlert } from "../../../../../packages/geo/src/alert-decision";
 import { allowRequest } from "../../../../lib/rate-limit";
+import { getOperationalMode } from "../../../../lib/operational-mode";
 
 const DEMO_ROUTE = [
   { latitude: 13.0458, longitude: 80.2079 },
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ambulanceId: "AMB-DEMO-01",
       decision,
-      mode: "simulation",
+      mode: getOperationalMode(),
       receivedAt: new Date().toISOString(),
     });
   } catch (error) {
