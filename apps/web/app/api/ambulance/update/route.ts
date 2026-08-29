@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { evaluateSignalAlert } from "../../../../../packages/geo/src/alert-decision";
+import { evaluateSignalAlert } from "../../../../lib/server-alert";
 import { allowRequest } from "../../../../lib/rate-limit";
 import { getOperationalMode } from "../../../../lib/operational-mode";
 
