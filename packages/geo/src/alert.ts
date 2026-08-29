@@ -16,6 +16,19 @@ export function routeDistanceMeters(route: GeoPoint[]): number {
   return total;
 }
 
+function nearestPointIndex(signal: DemoSignal, route: GeoPoint[]): number {
+  let bestIndex = 0;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  route.forEach((point, index) => {
+    const distance = haversineDistanceMeters(point, signal);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestIndex = index;
+    }
+  });
+  return bestIndex;
+}
+
 export function decideSignalAlert(
   current: GeoPoint,
   signal: DemoSignal,
@@ -29,8 +42,15 @@ export function decideSignalAlert(
     return { shouldAlert: false, distanceMeters, etaSeconds: null, reason: 'signal_outside_lookahead' };
   }
 
-  const routeToSignal = [current, ...routeAhead];
-  const etaSeconds = speedMps && speedMps > 0 ? routeDistanceMeters(routeToSignal) / speedMps : null;
+  const route = [current, ...routeAhead];
+  const signalIndex = nearestPointIndex(signal, route);
+  const routeToSignal = route.slice(0, signalIndex + 1);
+  if (routeToSignal.length === 0) {
+    return { shouldAlert: false, distanceMeters, etaSeconds: null, reason: 'signal_not_on_route' };
+  }
+
+  const routeDistance = routeDistanceMeters(routeToSignal);
+  const etaSeconds = speedMps && speedMps > 0 ? routeDistance / speedMps : null;
   const shouldAlert = distanceMeters <= triggerDistanceMeters || (etaSeconds !== null && etaSeconds <= triggerEtaSeconds);
 
   return {
