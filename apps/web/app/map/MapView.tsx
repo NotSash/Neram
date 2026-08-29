@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 
 type Point = { latitude: number; longitude: number };
 type Signal = Point & { id: string; name: string; status: "next" | "upcoming" | "passed" };
+type RouteResponse = { distanceMeters: number; durationSeconds: number; shape: Array<{ lat: number; lon: number }> };
 
 const DEMO_SIGNALS: Signal[] = [
   { id: "signal-a", name: "Demo Signal A", latitude: 13.0474, longitude: 80.2098, status: "next" },
@@ -13,7 +14,7 @@ const DEMO_SIGNALS: Signal[] = [
   { id: "signal-c", name: "Demo Signal C", latitude: 13.0522, longitude: 80.2148, status: "upcoming" },
 ];
 
-const ROUTE: Point[] = [
+const DEMO_ROUTE: Point[] = [
   { latitude: 13.0458, longitude: 80.2079 },
   { latitude: 13.0466, longitude: 80.2087 },
   { latitude: 13.0472, longitude: 80.2094 },
@@ -41,43 +42,72 @@ function MapController({ position }: { position: Point }) {
 export default function MapView() {
   const [index, setIndex] = useState(0);
   const [running, setRunning] = useState(true);
-  const position = ROUTE[index];
+  const [route, setRoute] = useState<Point[]>(DEMO_ROUTE);
+  const [routeStatus, setRouteStatus] = useState<"routing" | "live" | "fallback">("routing");
 
-  const signalProgress = useMemo(() => {
-    const thresholds = [2, 6, 9];
-    return thresholds.map((threshold, signalIndex) => ({ threshold, signalIndex }));
+  const position = route[Math.min(index, route.length - 1)];
+  const progress = route.length > 1 ? (index / (route.length - 1)) * 100 : 0;
+  const distanceRemaining = Math.max(0, Math.round(((route.length - 1 - index) / Math.max(route.length - 1, 1)) * 840));
+  const etaSeconds = Math.max(0, Math.round((route.length - 1 - index) * 18));
+  const currentSignalIndex = Math.min(Math.floor(index / Math.max(1, Math.ceil(route.length / DEMO_SIGNALS.length))), DEMO_SIGNALS.length - 1);
+
+  const signals = useMemo(
+    () => DEMO_SIGNALS.map((signal, signalIndex) => ({
+      ...signal,
+      status: signalIndex < currentSignalIndex ? "passed" : signalIndex === currentSignalIndex ? "next" : "upcoming",
+    } as Signal)),
+    [currentSignalIndex],
+  );
+
+  const currentSignal = signals.find((signal) => signal.status === "next") ?? signals.at(-1)!;
+  const line = route.map((point) => [point.latitude, point.longitude] as [number, number]);
+
+  useEffect(() => {
+    let active = true;
+    const loadRoute = async () => {
+      try {
+        const response = await fetch("/api/route", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            locations: [
+              { lat: DEMO_ROUTE[0].latitude, lon: DEMO_ROUTE[0].longitude },
+              { lat: DEMO_ROUTE.at(-1)!.latitude, lon: DEMO_ROUTE.at(-1)!.longitude },
+            ],
+          }),
+        });
+        if (!response.ok) throw new Error("Routing service unavailable");
+        const data = (await response.json()) as RouteResponse;
+        if (!data.shape?.length) throw new Error("Routing service returned no geometry");
+        if (!active) return;
+        setRoute(data.shape.map(({ lat, lon }) => ({ latitude: lat, longitude: lon })));
+        setIndex(0);
+        setRouteStatus("live");
+      } catch {
+        if (!active) return;
+        setRoute(DEMO_ROUTE);
+        setRouteStatus("fallback");
+      }
+    };
+    void loadRoute();
+    return () => {
+      active = false;
+    };
   }, []);
-
-  const currentSignalIndex = useMemo(() => {
-    const next = signalProgress.find(({ threshold }) => index < threshold);
-    return next?.signalIndex ?? DEMO_SIGNALS.length - 1;
-  }, [index, signalProgress]);
-
-  const remainingSignals = DEMO_SIGNALS.map((item, signalIndex) => ({
-    ...item,
-    status: signalIndex < currentSignalIndex ? "passed" : signalIndex === currentSignalIndex ? "next" : "upcoming",
-  } as Signal));
-
-  const nextSignal = remainingSignals[currentSignalIndex];
-  const line = ROUTE.map((point) => [point.latitude, point.longitude] as [number, number]);
-  const progress = (index / (ROUTE.length - 1)) * 100;
-  const distanceRemaining = Math.max(0, Math.round(((ROUTE.length - 1 - index) / (ROUTE.length - 1)) * 840));
-  const etaSeconds = Math.max(0, Math.round((ROUTE.length - 1 - index) * 18));
-  const atFinal = index >= ROUTE.length - 1;
 
   useEffect(() => {
     if (!running) return;
     const timer = window.setInterval(() => {
       setIndex((value) => {
-        if (value >= ROUTE.length - 1) {
+        if (value >= route.length - 1) {
           setRunning(false);
           return value;
         }
         return value + 1;
       });
-    }, 1800);
+    }, 1400);
     return () => window.clearInterval(timer);
-  }, [running]);
+  }, [running, route.length]);
 
   return (
     <div className="map-frame" aria-label="Neram training simulation map">
@@ -85,7 +115,7 @@ export default function MapView() {
         <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <MapController position={position} />
         <Polyline positions={line} pathOptions={{ color: "#2563eb", weight: 6, opacity: 0.8 }} />
-        {remainingSignals.map((item) => (
+        {signals.map((item) => (
           <CircleMarker
             key={item.id}
             center={[item.latitude, item.longitude]}
@@ -109,7 +139,7 @@ export default function MapView() {
         <div>
           <span className="map-overline">ACTIVE EMERGENCY · TRAINING</span>
           <strong>AMB-DEMO-01</strong>
-          <span>{running ? "Route simulation in progress" : atFinal ? "Simulation complete" : "Simulation paused"}</span>
+          <span>{routeStatus === "live" ? "OSM / Valhalla route" : routeStatus === "routing" ? "Calculating road route…" : "Demo fallback route"}</span>
         </div>
         <div className="map-kpi"><strong>{etaSeconds}s</strong><span>ETA to next signal</span></div>
       </div>
@@ -117,12 +147,9 @@ export default function MapView() {
       <div className="map-overlay map-overlay-bottom">
         <div className="map-progress"><span style={{ width: `${progress}%` }} /></div>
         <div className="map-bottom-row">
-          <div><b>Next signal</b><span>{nextSignal?.name ?? "Route complete"}</span></div>
+          <div><b>Next signal</b><span>{currentSignal.name}</span></div>
           <div><b>{distanceRemaining} m</b><span>estimated remaining</span></div>
-          <button type="button" className="map-control" onClick={() => {
-            if (atFinal) setIndex(0);
-            setRunning((value) => !value || atFinal);
-          }}>{running ? "Pause" : atFinal ? "Replay" : "Resume"}</button>
+          <button type="button" className="map-control" onClick={() => { if (index >= route.length - 1) setIndex(0); setRunning((value) => !value); }}>{running ? "Pause" : index >= route.length - 1 ? "Replay" : "Resume"}</button>
         </div>
       </div>
 
