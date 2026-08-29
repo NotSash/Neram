@@ -2,7 +2,7 @@ import { findUpcomingSignal, type GeoPoint, type RoutedSignal } from "./upcoming
 
 export type AlertDecision = {
   shouldAlert: boolean;
-  reason: "no_signal" | "too_far" | "approaching";
+  reason: "no_signal" | "too_far" | "approaching" | "gps_stale" | "gps_invalid";
   signal: RoutedSignal | null;
   distanceToSignalMeters: number | null;
   estimatedEtaSeconds: number | null;
@@ -14,7 +14,18 @@ export function evaluateSignalAlert(
   signals: RoutedSignal[],
   speedMps: number | null,
   triggerDistanceMeters = 500,
+  gpsQuality: "good" | "degraded" | "stale" | "invalid" = "good",
 ): AlertDecision {
+  if (gpsQuality === "stale" || gpsQuality === "invalid") {
+    return {
+      shouldAlert: false,
+      reason: gpsQuality === "stale" ? "gps_stale" : "gps_invalid",
+      signal: null,
+      distanceToSignalMeters: null,
+      estimatedEtaSeconds: null,
+    };
+  }
+
   const candidate = findUpcomingSignal(route, ambulancePosition, signals, 120);
 
   if (!candidate) {
