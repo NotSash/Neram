@@ -4,10 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { evaluateSignalAlert, findUpcomingSignal } from "@neram/geo";
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { getSupabaseBrowserClient } from "../../lib/supabase/browser";
 
 type Point = { latitude: number; longitude: number };
 type Signal = Point & { id: string; name: string; status: "next" | "upcoming" | "passed" };
 type RouteResponse = { distanceMeters: number; durationSeconds: number; shape: Array<{ lat: number; lon: number }> };
+type SignalRecord = { id: string; name: string; latitude: number; longitude: number };
 
 const DEMO_SIGNALS: Signal[] = [
   { id: "signal-a", name: "Demo Signal A", latitude: 13.0474, longitude: 80.2098, status: "next" },
@@ -44,6 +46,8 @@ export default function MapView() {
   const [index, setIndex] = useState(0);
   const [running, setRunning] = useState(true);
   const [route, setRoute] = useState<Point[]>(DEMO_ROUTE);
+  const [signalsBase, setSignalsBase] = useState<SignalRecord[]>(DEMO_SIGNALS);
+  const [signalsSource, setSignalsSource] = useState<"demo" | "verified">("demo");
   const [routeStatus, setRouteStatus] = useState<"routing" | "live" | "fallback">("routing");
 
   const position = route[Math.min(index, route.length - 1)];
@@ -51,28 +55,17 @@ export default function MapView() {
   const progress = route.length > 1 ? (index / (route.length - 1)) * 100 : 0;
   const speedMps = 13.9;
 
-  const upcoming = findUpcomingSignal(
-    route,
-    position,
-    DEMO_SIGNALS.map(({ id, name, latitude, longitude }) => ({ id, name, latitude, longitude })),
-    160,
-  );
-
-  const alertDecision = evaluateSignalAlert(
-    route,
-    position,
-    DEMO_SIGNALS.map(({ id, name, latitude, longitude }) => ({ id, name, latitude, longitude })),
-    speedMps,
-    500,
-  );
+  const upcoming = findUpcomingSignal(route, position, signalsBase, 160);
+  const alertDecision = evaluateSignalAlert(route, position, signalsBase, speedMps, 500);
 
   const signals = useMemo(() => {
     const nextId = upcoming?.signal.id;
-    return DEMO_SIGNALS.map((signal) => ({
+    const ambulancePassedProgress = upcoming?.distanceAheadMeters;
+    return signalsBase.map((signal) => ({
       ...signal,
-      status: signal.id === nextId ? "next" : signal.id === upcoming?.signal.id ? "next" : "upcoming",
+      status: signal.id === nextId ? "next" : ambulancePassedProgress !== undefined && signal.id !== nextId ? "upcoming" : "upcoming",
     } as Signal));
-  }, [upcoming?.signal.id]);
+  }, [signalsBase, upcoming?.signal.id, upcoming?.distanceAheadMeters]);
 
   const nextSignal = signals.find((signal) => signal.status === "next") ?? signals[0];
   const distanceToSignal = alertDecision.distanceToSignalMeters ?? upcoming?.distanceAheadMeters ?? null;
@@ -111,6 +104,34 @@ export default function MapView() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    const loadVerifiedSignals = async () => {
+      try {
+        const supabase = getSupabaseBrowserClient();
+        const { data, error } = await supabase.rpc("find_nearby_verified_signals", {
+          latitude: position.latitude,
+          longitude: position.longitude,
+          radius_meters: 2500,
+        });
+        if (error || !active || !data?.length) return;
+        setSignalsBase(data.map((signal: SignalRecord) => ({
+          id: signal.id,
+          name: signal.name,
+          latitude: signal.latitude,
+          longitude: signal.longitude,
+        })));
+        setSignalsSource("verified");
+      } catch {
+        // Missing Vercel Supabase configuration keeps the simulator on safe demo data.
+      }
+    };
+    void loadVerifiedSignals();
+    return () => {
+      active = false;
+    };
+  }, [position.latitude, position.longitude]);
 
   useEffect(() => {
     if (!running) return;
@@ -156,7 +177,7 @@ export default function MapView() {
         <div>
           <span className="map-overline">ACTIVE EMERGENCY · TRAINING</span>
           <strong>AMB-DEMO-01</strong>
-          <span>{routeStatus === "live" ? "OSM / Valhalla route" : routeStatus === "routing" ? "Calculating road route…" : "Demo fallback route"}</span>
+          <span>{routeStatus === "live" ? "OSM / Valhalla route" : routeStatus === "routing" ? "Calculating road route…" : "Demo fallback route"} · {signalsSource === "verified" ? "Verified signals" : "Demo signals"}</span>
         </div>
         <div className="map-kpi"><strong>{etaSeconds}s</strong><span>ETA to {alertDecision.signal?.name ?? nextSignal?.name ?? "next signal"}</span></div>
       </div>
@@ -186,7 +207,7 @@ export default function MapView() {
         <span><i className="legend-dot passed" /> Other signal</span>
         <span><i className="legend-line" /> Route</span>
       </div>
-      <div className="map-disclaimer">Training simulation · Demo geometry only · Police alert is advisory</div>
+      <div className="map-disclaimer">Training simulation · {signalsSource === "verified" ? "Verified signal data" : "Demo geometry only"} · Police alert is advisory</div>
     </div>
   );
 }
