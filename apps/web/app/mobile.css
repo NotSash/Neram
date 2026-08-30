@@ -1,25 +1,117 @@
-/* Neram mobile-first interaction layer. Loaded after globals.css so phone layouts can be optimized without touching desktop primitives. */
+/* Neram mobile-first interaction layer. Loaded after globals.css. */
 @media (max-width: 760px) {
+  :root { --mobile-gutter: 16px; }
   html { font-size: 16px; }
   body { min-width: 320px; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
-  button, a { touch-action: manipulation; }
+  button, a, summary { touch-action: manipulation; }
   button { min-height: 44px; }
 
-  .home-nav { height: auto; min-height: 64px; padding: 12px 16px; gap: 12px; }
-  .home-nav .ops-brand { flex: 1; min-width: 0; }
+  /* Home */
+  .home-nav {
+    position: relative;
+    height: 68px;
+    min-height: 68px;
+    padding: 10px var(--mobile-gutter);
+    gap: 12px;
+    background: rgba(7,10,16,.92);
+  }
+  .home-brand-link { flex: 1; min-width: 0; gap: 9px; }
+  .home-brand-link .brand-mark { width: 34px; height: 34px; border-radius: 10px; font-size: 17px; }
+  .home-brand-link > span:not(.brand-mark) { font-size: 18px; white-space: nowrap; }
   .home-nav .ops-brand small { display: none; }
-  .home-links { gap: 8px; }
-  .home-links a { padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; font-size: 10px; white-space: nowrap; }
-  .home-hero { width: min(100% - 32px, 900px); padding: 72px 0 48px; }
-  .home-hero h1 { font-size: clamp(42px, 13vw, 62px); letter-spacing: -2.4px; line-height: .96; margin: 12px 0 18px; }
-  .home-hero > p { font-size: 16px; line-height: 1.55; }
-  .home-actions { flex-direction: column; gap: 8px; margin-top: 24px; }
-  .home-primary, .home-secondary { display: flex; align-items: center; justify-content: space-between; min-height: 48px; width: 100%; padding: 13px 14px; }
-  .home-primary span { margin-left: auto; }
-  .home-note { margin-top: 18px; line-height: 1.5; }
-  .home-principles { width: min(100% - 32px, 900px); grid-template-columns: 1fr; border-radius: 14px; }
+  .home-links-desktop { display: none; }
+
+  .home-mobile-menu { position: relative; flex: none; }
+  .home-mobile-menu summary {
+    list-style: none;
+    width: 48px;
+    height: 48px;
+    border: 1px solid #293447;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    gap: 4px;
+    padding: 12px;
+    cursor: pointer;
+    background: #0d121b;
+  }
+  .home-mobile-menu summary::-webkit-details-marker { display: none; }
+  .home-mobile-menu summary > span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    border-radius: 2px;
+    background: #d8dee8;
+    transition: transform .18s ease, opacity .18s ease;
+  }
+  .home-mobile-menu[open] summary > span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+  .home-mobile-menu[open] summary > span:nth-child(2) { opacity: 0; }
+  .home-mobile-menu[open] summary > span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+  .home-mobile-menu-panel {
+    position: absolute;
+    right: 0;
+    top: 56px;
+    width: min(300px, calc(100vw - 32px));
+    padding: 8px;
+    border: 1px solid #263246;
+    border-radius: 15px;
+    background: rgba(13,18,27,.98);
+    box-shadow: 0 18px 40px rgba(0,0,0,.38);
+    z-index: 100;
+  }
+  .home-mobile-menu-panel a {
+    min-height: 50px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #d4dbe6;
+  }
+  .home-mobile-menu-panel a + a { border-top: 1px solid #1b2431; border-top-left-radius: 0; border-top-right-radius: 0; }
+  .home-mobile-menu-panel a span { color: #718096; }
+
+  .home-hero {
+    width: calc(100% - 32px);
+    margin: 0 auto;
+    padding: 54px 0 38px;
+  }
+  .home-hero h1 {
+    max-width: 680px;
+    font-size: clamp(44px, 12.5vw, 60px);
+    letter-spacing: -2.2px;
+    line-height: .98;
+    margin: 11px 0 18px;
+  }
+  .home-hero > p {
+    max-width: 680px;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  .home-actions { flex-direction: column; gap: 9px; margin-top: 24px; }
+  .home-primary, .home-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 52px;
+    width: 100%;
+    padding: 14px 15px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+  .home-primary span { margin-left: auto; font-size: 20px; line-height: 1; }
+  .home-note { margin-top: 16px; line-height: 1.5; }
+  .home-principles {
+    width: calc(100% - 32px);
+    margin: 0 auto;
+    grid-template-columns: 1fr;
+    border-radius: 14px;
+  }
   .home-principles > div { padding: 18px; }
 
+  /* Shared operations surfaces */
   .ops-topbar { height: 60px; padding: 0 16px; }
   .ops-city { display: none; }
   .ops-connection { font-size: 9px; }
@@ -47,6 +139,7 @@
   .primary-action, .secondary-action { min-height: 48px; }
   .event-panel { margin-top: 12px; }
 
+  /* Dashboard */
   .ops-main { min-width: 0; }
   .ops-stats { grid-template-columns: repeat(3, 1fr) !important; gap: 1px !important; }
   .ops-stats > div { min-width: 0; padding: 12px 10px !important; }
@@ -65,6 +158,7 @@
   .detail-actions { display: grid !important; grid-template-columns: 1fr; gap: 8px; }
   .event-strip { flex-wrap: wrap !important; gap: 8px 14px !important; line-height: 1.4; }
 
+  /* Map */
   .map-page { padding: 0; }
   .map-header { width: auto; margin: 0; padding: 16px; display: block; }
   .map-header h1 { font-size: 27px; letter-spacing: -1px; }
@@ -86,42 +180,31 @@
   .map-disclaimer { left: 10px; right: 10px; bottom: 10px; text-align: center; }
   .map-alert-banner { left: 10px !important; right: 10px !important; top: 118px !important; padding: 10px 11px !important; font-size: 9px !important; line-height: 1.35; }
 
-  main[style*="max-width: 1000px"] { padding: 16px !important; }
-
-  /* Ambulance PWA surface */
-  .ambulance-shell { min-height: 100svh !important; padding-bottom: max(24px, env(safe-area-inset-bottom)) !important; }
-  .ambulance-header { padding: 12px 16px !important; min-height: 60px; }
-  .ambulance-header .ops-brand small { display: none !important; }
-  .ambulance-status { font-size: 9px !important; }
-  .ambulance-card { margin: 10px 12px !important; padding: 18px !important; border-radius: 16px !important; }
-  .ambulance-hero h1 { font-size: clamp(32px, 9vw, 42px) !important; line-height: 1.02 !important; letter-spacing: -1.4px !important; }
-  .ambulance-hero > p { font-size: 13px !important; line-height: 1.55 !important; }
-  .ambulance-meta-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; margin-top: 18px !important; }
-  .ambulance-meta-grid > div { padding: 12px !important; }
-  .ambulance-start, .ambulance-stop { width: 100% !important; min-height: 56px !important; border-radius: 13px !important; font-size: 14px !important; margin-top: 12px !important; }
-  .ambulance-sharing { display: grid !important; grid-template-columns: auto 1fr; gap: 10px !important; padding: 14px !important; }
+  /* Ambulance mode */
+  .ambulance-shell { min-height: 100svh; padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+  .ambulance-header { padding-left: 16px; padding-right: 16px; }
+  .ambulance-card { margin-left: 16px; margin-right: 16px; border-radius: 16px; }
+  .ambulance-hero { padding: 22px 18px 18px; }
+  .ambulance-hero h1 { font-size: clamp(30px, 8.8vw, 40px); line-height: 1.02; letter-spacing: -1.1px; }
+  .ambulance-hero p { font-size: 13px; line-height: 1.5; }
+  .ambulance-meta-grid, .ambulance-fields { grid-template-columns: 1fr !important; }
+  .ambulance-start, .ambulance-stop { min-height: 56px; width: 100%; border-radius: 13px; }
+  .ambulance-sharing { grid-template-columns: 18px 1fr; gap: 10px; }
   .ambulance-sharing > button { grid-column: 1 / -1; width: 100%; min-height: 46px; }
-  .ambulance-alert-preview { grid-template-columns: 1fr auto !important; gap: 12px !important; padding: 14px !important; }
-  .ambulance-fields { grid-template-columns: 1fr !important; gap: 12px !important; }
-  .ambulance-fields label { font-size: 11px !important; }
-  .ambulance-fields input, .ambulance-fields select { min-height: 48px !important; font-size: 16px !important; }
-  .ambulance-note { font-size: 10px !important; line-height: 1.5 !important; }
+  .ambulance-alert-preview { grid-template-columns: 1fr auto; }
+
+  /* Live police console */
+  main[style*="max-width: 1000px"] { padding: 16px !important; }
 }
 
 @media (max-width: 420px) {
-  .home-hero { padding-top: 54px; }
-  .home-hero h1 { font-size: 43px; }
+  .home-hero { padding-top: 42px; }
+  .home-hero h1 { font-size: 42px; }
   .home-links a { font-size: 9px; padding-inline: 8px; }
   .ops-stats span { letter-spacing: .2px !important; }
   .ops-alert { grid-template-columns: 34px 1fr auto !important; }
   .alert-severity { width: 30px !important; height: 30px !important; }
   .detail-metrics { gap: 1px !important; }
-  .ambulance-card { margin-inline: 10px !important; padding: 16px !important; }
-  .ambulance-meta-grid strong { font-size: 13px !important; }
-}
-
-@media (display-mode: standalone) {
-  .ambulance-header { padding-top: max(12px, env(safe-area-inset-top)) !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
