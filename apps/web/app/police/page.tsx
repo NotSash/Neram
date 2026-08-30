@@ -2,9 +2,82 @@
 
 import { useState } from "react";
 
+function ArrowIcon() {
+  return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M10.5 5.5 15 10l-4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+}
+
+function SignalIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="4" width="8" height="16" rx="2.4" fill="none" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="8" r="1.7" fill="currentColor" /><circle cx="12" cy="12" r="1.7" fill="currentColor" opacity=".34" /><circle cx="12" cy="16" r="1.7" fill="currentColor" opacity=".34" /></svg>;
+}
+
 export default function PoliceDashboard() {
   const [ack, setAck] = useState(false);
   const [cleared, setCleared] = useState(false);
   const status = cleared ? "CLEARED" : ack ? "ACKNOWLEDGED" : "ACTION NEEDED";
-  return <main style={{minHeight:'100vh',background:'#070a10',color:'#f5f7fa',fontFamily:'DM Sans,system-ui,sans-serif',padding:'32px'}}><div style={{maxWidth:1160,margin:'0 auto'}}><header style={{display:'flex',justifyContent:'space-between',alignItems:'center',paddingBottom:24,borderBottom:'1px solid #202a38'}}><div><div style={{font:'800 20px Manrope,sans-serif'}}>Neram</div><div style={{fontSize:9,letterSpacing:1.5,color:'#718096',marginTop:3}}>CHENNAI EMERGENCY NETWORK</div></div><div style={{fontSize:10,fontWeight:800,color:'#43d19e',letterSpacing:1.1}}>● SYSTEM ONLINE</div></header><section style={{padding:'48px 0 26px',display:'flex',justifyContent:'space-between',alignItems:'end',gap:20}}><div><div style={{fontSize:10,fontWeight:800,letterSpacing:1.7,color:'#718096'}}>TRAFFIC POLICE · TRAINING CONSOLE</div><h1 style={{font:'800 38px Manrope,sans-serif',letterSpacing:-1.4,margin:'10px 0 6px'}}>Signal watch</h1><p style={{margin:0,color:'#8d99aa',fontSize:13}}>Advance information for authorized traffic personnel.</p></div><div style={{padding:'8px 11px',border:'1px solid #2a3546',borderRadius:9,fontSize:9,fontWeight:800,letterSpacing:1.1,color:cleared?'#43d19e':ack?'#f4c85e':'#ff5b5b'}}>{status}</div></section>{!cleared?<section style={{display:'grid',gridTemplateColumns:'auto 1fr auto',gap:16,alignItems:'center',padding:'20px',border:'1px solid rgba(255,91,91,.4)',borderRadius:16,background:'linear-gradient(100deg,rgba(255,91,91,.12),rgba(13,18,27,.94))'}}><div style={{width:44,height:44,borderRadius:13,display:'grid',placeItems:'center',background:'rgba(255,91,91,.13)',color:'#ff5b5b',font:'800 22px Manrope'}}>!</div><div><div style={{fontSize:9,fontWeight:900,letterSpacing:1.4,color:ack?'#f4c85e':'#ff5b5b'}}>{ack?'AMBULANCE MONITORING':'AMBULANCE APPROACHING'}</div><div style={{font:'800 18px Manrope',marginTop:3}}>AMB-DEMO-01</div><div style={{fontSize:13,color:'#8d99aa',marginTop:2}}>Approaching <strong style={{color:'#f5f7fa'}}>Demo Signal A</strong> from the west</div></div><div style={{textAlign:'right',paddingLeft:28,borderLeft:'1px solid #202a38'}}><strong style={{font:'800 31px Manrope'}}>{ack?'18':'42'}</strong><span style={{display:'block',fontSize:10,color:'#8d99aa'}}>seconds</span></div></section>:<section style={{display:'flex',gap:12,alignItems:'center',padding:20,border:'1px solid rgba(67,209,158,.24)',borderRadius:16,background:'rgba(67,209,158,.07)'}}><div style={{width:40,height:40,borderRadius:12,display:'grid',placeItems:'center',background:'rgba(67,209,158,.1)',color:'#43d19e',fontWeight:900}}>✓</div><div><strong style={{font:'800 17px Manrope'}}>Ambulance cleared the signal</strong><div style={{fontSize:12,color:'#8d99aa',marginTop:3}}>The training alert is closed.</div></div></section>}<div style={{display:'grid',gridTemplateColumns:'1.5fr .8fr',gap:18,marginTop:18}}><section style={{border:'1px solid #202a38',borderRadius:16,background:'#0d121b',padding:20}}><div style={{display:'flex',justifyContent:'space-between'}}><div><div style={{fontSize:9,fontWeight:800,letterSpacing:1.5,color:'#718096'}}>YOUR ASSIGNED SIGNAL</div><h2 style={{font:'800 20px Manrope',margin:'6px 0 2px'}}>Demo Signal A</h2><div style={{fontSize:12,color:'#8d99aa'}}>Simulation corridor</div></div><div style={{fontSize:8,fontWeight:800,color:'#43d19e',background:'rgba(67,209,158,.08)',padding:'6px 8px',borderRadius:7,height:'fit-content'}}>ASSIGNED</div></div><div style={{height:255,margin:'20px 0',borderRadius:13,background:'#090e16',position:'relative',overflow:'hidden'}}><div style={{position:'absolute',left:0,right:0,top:'50%',height:66,background:'#303b4a',transform:'translateY(-50%)'}}/><div style={{position:'absolute',top:0,bottom:0,left:'50%',width:66,background:'#303b4a',transform:'translateX(-50%)'}}/><div style={{position:'absolute',right:'21%',top:'30%',padding:6,borderRadius:8,background:'#121a26',border:'1px solid #263043'}}><div style={{width:9,height:9,borderRadius:'50%',background:'#ff5b5b'}}/><div style={{width:9,height:9,borderRadius:'50%',background:'#2a3443',marginTop:4}}/><div style={{width:9,height:9,borderRadius:'50%',background:'#2a3443',marginTop:4}}/></div><div style={{position:'absolute',left:'22%',top:'calc(50% - 20px)',fontSize:23}}>🚑</div><div style={{position:'absolute',top:14,right:15,fontSize:9,fontWeight:800,color:'#77869a'}}>N</div></div><div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1,background:'#202a38',border:'1px solid #202a38',borderRadius:10,overflow:'hidden'}}>{[['Approach','West → East'],['Distance','~310 m'],['GPS quality','Good']].map(([a,b])=><div key={a} style={{padding:12,background:'#0c121b'}}><div style={{fontSize:10,color:'#718096',marginBottom:4}}>{a}</div><strong style={{fontSize:12,color:b==='Good'?'#43d19e':'#f5f7fa'}}>{b}</strong></div>)}</div></section><aside style={{border:'1px solid #202a38',borderRadius:16,background:'#0d121b',padding:20}}><div style={{fontSize:9,fontWeight:800,letterSpacing:1.5,color:'#718096'}}>OFFICER ACTION</div><h2 style={{font:'800 28px Manrope',margin:'8px 0 5px'}}>{cleared?'Closed':ack?'Monitoring':'Prepare'}</h2><p style={{fontSize:12,color:'#8d99aa',lineHeight:1.55,margin:'0 0 20px'}}>{cleared?'No further action is required.':'Use this alert as advance information and follow existing traffic-control procedure.'}</p>{!cleared&&!ack&&<button onClick={()=>setAck(true)} style={{width:'100%',border:0,borderRadius:10,padding:'13px 14px',background:'#f3f5f8',color:'#0a0d13',fontWeight:800,cursor:'pointer'}}>Acknowledge alert <span style={{float:'right',opacity:.5}}>↵</span></button>}{ack&&!cleared&&<button onClick={()=>setCleared(true)} style={{width:'100%',border:'1px solid rgba(67,209,158,.24)',borderRadius:10,padding:'13px 14px',background:'rgba(67,209,158,.1)',color:'#43d19e',fontWeight:800,cursor:'pointer'}}>Mark signal cleared <span style={{float:'right',opacity:.5}}>✓</span></button>}<div style={{display:'flex',gap:8,marginTop:17,color:'#677487',fontSize:10,lineHeight:1.45}}><span style={{width:16,height:16,border:'1px solid #394556',borderRadius:'50%',display:'grid',placeItems:'center',flex:'none'}}>i</span><span>Neram does not control traffic signals.</span></div></aside></div><section style={{marginTop:18,border:'1px solid #202a38',borderRadius:16,background:'#0d121b',padding:20}}><div style={{fontSize:9,fontWeight:800,letterSpacing:1.5,color:'#718096'}}>EVENT TIMELINE</div><div style={{display:'grid',gap:16,marginTop:18}}>{[['Approaching signal', 'ETA window opened', true],['Officer acknowledgement',ack?'Alert acknowledged':'Waiting for acknowledgement',ack],['Signal cleared',cleared?'Training trip completed':'Pending',cleared]].map(([title,sub,active])=><div key={String(title)} style={{display:'grid',gridTemplateColumns:'10px 1fr auto',gap:12,alignItems:'start'}}><span style={{width:9,height:9,borderRadius:'50%',background:active?'#43d19e':'#344052',marginTop:3}}/><div><strong style={{fontSize:12}}>{String(title)}</strong><div style={{fontSize:10,color:'#6f7d90',marginTop:3}}>{String(sub)}</div></div><span style={{fontSize:9,color:'#5e6c7f'}}>{active?'Now':'—'}</span></div>)}</div></section></div></main>;
+
+  return (
+    <main className="ops-shell police-page">
+      <header className="ops-topbar police-topbar">
+        <a className="ops-brand" href="/" aria-label="Back to Neram home"><span className="brand-mark">N</span><span>Neram</span><small>CHENNAI EMERGENCY NETWORK</small></a>
+        <div className="police-top-actions">
+          <span className="ops-connection"><i className="status-pulse" /> SYSTEM ONLINE</span>
+          <a className="police-top-link" href="/police-live">Live alert <ArrowIcon /></a>
+        </div>
+      </header>
+
+      <div className="ops-content police-content">
+        <section className="ops-heading police-heading">
+          <div><div className="label">TRAFFIC POLICE · TRAINING CONSOLE</div><h1>Signal watch</h1><p>Advance information for authorized traffic personnel.</p></div>
+          <span className={`ops-status ${cleared ? "ok" : ack ? "ack" : "urgent"}`}><i /> {status}</span>
+        </section>
+
+        {!cleared ? (
+          <section className={`priority-alert police-priority ${ack ? "acknowledged" : ""}`}>
+            <div className="priority-icon">!</div>
+            <div className="priority-copy"><div className="priority-label">{ack ? "AMBULANCE MONITORING" : "AMBULANCE APPROACHING"}</div><h2>AMB-DEMO-01</h2><p>Approaching <strong>Demo Signal A</strong> from the west</p></div>
+            <div className="priority-eta"><strong>{ack ? "18" : "42"}</strong><span>seconds</span></div>
+          </section>
+        ) : (
+          <section className="cleared-banner police-cleared"><span>✓</span><div><strong>Ambulance cleared the signal</strong><p>The training alert is closed.</p></div></section>
+        )}
+
+        <div className="ops-grid police-grid">
+          <section className="ops-panel police-signal-panel">
+            <div className="panel-head"><div><div className="label">YOUR ASSIGNED SIGNAL</div><h2>Demo Signal A</h2><p>Simulation corridor</p></div><span className="assigned">ASSIGNED</span></div>
+            <div className="intersection police-intersection">
+              <div className="intersection-glow" />
+              <div className="road road-h" /><div className="road road-v" />
+              <div className="road road-h road-soft" /><div className="road road-v road-soft" />
+              <div className="signal-light"><i /><i /><i /></div>
+              <div className="ambulance-token"><span>AMB</span></div><div className="route-trail" />
+              <div className="map-corner north">N</div>
+              <div className="intersection-tag"><SignalIcon /><span>DEMO SIGNAL A</span></div>
+            </div>
+            <div className="mini-stats police-stats"><div><span>Approach</span><strong>West → East</strong></div><div><span>Distance</span><strong>~310 m</strong></div><div><span>GPS quality</span><strong className="good">Good</strong></div></div>
+          </section>
+
+          <aside className="ops-panel action-panel police-action-panel">
+            <div className="label">OFFICER ACTION</div><div className="action-state">{cleared ? "Closed" : ack ? "Monitoring" : "Prepare"}</div>
+            <h2>{cleared ? "All clear" : ack ? "Keep watch" : "Prepare ahead"}</h2>
+            <p>{cleared ? "No further action is required for this training event." : "Use this alert as advance information and follow existing traffic-control procedure."}</p>
+            {!cleared && !ack && <button type="button" className="primary-action police-primary-action" onClick={() => setAck(true)}><span>Acknowledge alert</span><ArrowIcon /></button>}
+            {ack && !cleared && <button type="button" className="secondary-action police-secondary-action" onClick={() => setCleared(true)}><span>Mark signal cleared</span><span>✓</span></button>}
+            {cleared && <a className="secondary-action police-secondary-action" href="/police-live"><span>Return to live alerts</span><ArrowIcon /></a>}
+            <div className="action-note"><span>i</span><span>Neram does not control traffic signals. It provides advance information only.</span></div>
+          </aside>
+        </div>
+
+        <section className="event-panel police-event-panel">
+          <div className="panel-head"><div><div className="label">EVENT TIMELINE</div><h2>Response history</h2></div><span className="muted">Training event</span></div>
+          <div className="timeline police-timeline">
+            <div className="event active"><span /><div><strong>Approaching signal</strong><p>ETA window opened</p></div><time>Now</time></div>
+            <div className={`event ${ack ? "active" : ""}`}><span /><div><strong>Officer acknowledgement</strong><p>{ack ? "Alert acknowledged" : "Waiting for acknowledgement"}</p></div><time>{ack ? "Now" : "—"}</time></div>
+            <div className={`event ${cleared ? "active" : ""}`}><span /><div><strong>Signal cleared</strong><p>{cleared ? "Training trip completed" : "Pending"}</p></div><time>{cleared ? "Now" : "—"}</time></div>
+          </div>
+        </section>
+
+        <footer className="ops-footer police-footer"><span>TRAINING ENVIRONMENT · ADVISORY ONLY</span><span>No automated signal control</span></footer>
+      </div>
+    </main>
+  );
 }
