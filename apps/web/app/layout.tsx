@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import './mobile.css';
+import ServiceWorkerRegister from './ServiceWorkerRegister';
 
 export const metadata: Metadata = {
   title: 'Neram | Chennai Emergency Response',
@@ -26,5 +27,5 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en-IN"><body>{children}</body></html>;
+  return <html lang="en-IN"><body><ServiceWorkerRegister />{children}</body></html>;
 }
