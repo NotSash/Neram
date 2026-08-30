@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const DEMO_POINTS = [
   { latitude: 13.0458, longitude: 80.2079 },
@@ -23,6 +23,8 @@ type Decision = {
   estimatedEtaSeconds: number | null;
 };
 
+type GpsState = "simulation" | "device" | "denied" | "unavailable";
+
 export default function AmbulancePage() {
   const [active, setActive] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -31,6 +33,10 @@ export default function AmbulancePage() {
   const [decision, setDecision] = useState<Decision | null>(null);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [gpsState, setGpsState] = useState<GpsState>("simulation");
+  const [accuracyMeters, setAccuracyMeters] = useState<number | null>(null);
+  const [gpsError, setGpsError] = useState<string | null>(null);
+  const watchId = useRef<number | null>(null);
 
   useEffect(() => {
     if (!active) return;
@@ -39,21 +45,75 @@ export default function AmbulancePage() {
   }, [active]);
 
   useEffect(() => {
-    if (!active || !shared) return;
+    if (!active || !shared || gpsState !== "simulation") return;
     const timer = window.setInterval(() => {
       setPointIndex((value) => (value >= DEMO_POINTS.length - 1 ? 0 : value + 1));
     }, 2200);
     return () => window.clearInterval(timer);
-  }, [active, shared]);
+  }, [active, shared, gpsState]);
 
   useEffect(() => {
-    if (!active || !shared) return;
+    if (!active || !shared || gpsState !== "device") return;
+    if (!navigator.geolocation) {
+      setGpsState("unavailable");
+      setGpsError("This device does not expose browser location services.");
+      return;
+    }
+
+    const id = navigator.geolocation.watchPosition(
+      (position) => {
+        const point = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+        setAccuracyMeters(Number.isFinite(position.coords.accuracy) ? position.coords.accuracy : null);
+        setGpsError(null);
+        setSending(true);
+        fetch("/api/ambulance/update", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            ...point,
+            speedMps: Number.isFinite(position.coords.speed) && position.coords.speed !== null
+              ? Math.max(0, position.coords.speed)
+              : 13.9,
+            gpsQuality: position.coords.accuracy <= 30 ? "good" : "degraded",
+          }),
+        })
+          .then(async (response) => {
+            if (!response.ok) throw new Error("GPS update rejected");
+            return response.json() as Promise<{ decision: Decision }>;
+          })
+          .then((data) => {
+            setDecision(data.decision);
+            setLastUpdate(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+          })
+          .catch(() => setGpsError("Neram could not process the latest GPS update."))
+          .finally(() => setSending(false));
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          setGpsState("denied");
+          setGpsError("Location permission was denied. Simulation remains available.");
+        } else {
+          setGpsError("Unable to obtain a fresh GPS position.");
+        }
+      },
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 },
+    );
+
+    watchId.current = id;
+    return () => {
+      navigator.geolocation.clearWatch(id);
+      watchId.current = null;
+    };
+  }, [active, shared, gpsState]);
+
+  useEffect(() => {
+    if (!active || !shared || gpsState !== "simulation") return;
     const point = DEMO_POINTS[pointIndex];
     setSending(true);
     fetch("/api/ambulance/update", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ...point, speedMps: 13.9 }),
+      body: JSON.stringify({ ...point, speedMps: 13.9, gpsQuality: "good" }),
     })
       .then(async (response) => {
         if (!response.ok) throw new Error("Update failed");
@@ -65,15 +125,28 @@ export default function AmbulancePage() {
       })
       .catch(() => setLastUpdate(null))
       .finally(() => setSending(false));
-  }, [active, shared, pointIndex]);
+  }, [active, shared, pointIndex, gpsState]);
 
   const resetTrip = () => {
+    if (watchId.current !== null && navigator.geolocation) {
+      navigator.geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+    }
     setActive(false);
     setShared(false);
     setSeconds(0);
     setPointIndex(0);
     setDecision(null);
     setLastUpdate(null);
+    setGpsState("simulation");
+    setAccuracyMeters(null);
+    setGpsError(null);
+  };
+
+  const enableDeviceGps = () => {
+    setGpsError(null);
+    setGpsState("device");
+    setShared(true);
   };
 
   return (
@@ -102,12 +175,26 @@ export default function AmbulancePage() {
           <div className="ambulance-sharing" role="status">
             <span className={`sharing-indicator ${shared ? "is-shared" : ""}`} />
             <div>
-              <strong>{shared ? "Location shared" : "Location not shared"}</strong>
-              <p>{shared ? (sending ? "Sending GPS update…" : lastUpdate ? `Last update ${lastUpdate}` : "Waiting for first GPS update.") : "Enable training location sharing to exercise the alert pipeline."}</p>
+              <strong>{shared ? (gpsState === "device" ? "Device GPS active" : "Simulation GPS active") : "Location not shared"}</strong>
+              <p>
+                {!shared
+                  ? "Enable training location sharing to exercise the alert pipeline."
+                  : gpsState === "device"
+                    ? `${accuracyMeters ? `Accuracy ±${Math.round(accuracyMeters)}m` : "Waiting for GPS accuracy"} · ${sending ? "Sending update…" : lastUpdate ? `Last update ${lastUpdate}` : "Waiting for first GPS update."}`
+                    : sending ? "Sending simulated GPS update…" : lastUpdate ? `Last update ${lastUpdate}` : "Waiting for first simulated GPS update."}
+              </p>
             </div>
-            <button type="button" onClick={() => setShared((value) => !value)}>{shared ? "Pause" : "Enable"}</button>
+            {!shared ? (
+              <button type="button" onClick={() => setShared(true)}>Simulate GPS</button>
+            ) : gpsState === "device" ? (
+              <button type="button" onClick={() => { setGpsState("simulation"); setAccuracyMeters(null); setGpsError(null); }}>Simulation</button>
+            ) : (
+              <button type="button" onClick={enableDeviceGps}>Use device GPS</button>
+            )}
           </div>
         )}
+
+        {gpsError && <p className="ambulance-note" role="alert">{gpsError}</p>}
 
         {decision?.shouldAlert && (
           <div className="ambulance-alert-preview" role="status">
@@ -123,7 +210,7 @@ export default function AmbulancePage() {
           <label>Destination <input placeholder="Hospital or destination" /></label>
           <label>Priority <select defaultValue="emergency"><option value="emergency">Emergency</option><option value="critical">Critical</option></select></label>
         </div>
-        <p className="ambulance-note">Training mode. Destination and GPS are simulated until live Supabase connection is enabled.</p>
+        <p className="ambulance-note">Training mode. Device GPS can be exercised in-browser, but no live police network or Supabase persistence is enabled yet.</p>
       </section>
     </main>
   );
