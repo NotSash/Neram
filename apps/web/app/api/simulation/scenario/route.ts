@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { evaluateSignalAlert } from "../../../../../lib/alert-engine";
+import { evaluateSignalAlert } from "../../../../lib/alert-engine";
 
 const ROUTE = [
   { latitude: 13.0458, longitude: 80.2079 },
