@@ -1,5 +1,6 @@
 "use client";
 
+import "../premium-ops.css";
 import { useEffect, useMemo, useState } from "react";
 
 type Ambulance = {
@@ -71,7 +72,7 @@ export default function AmbulancesPage() {
               const selectedState = selectedId === ambulance.id;
               const fresh = ambulance.lastSeenSecondsAgo <= 10;
               return (
-                <button key={ambulance.id} type="button" className={`ambulance-row ${selectedState ? "selected" : ""}`} onClick={() => setSelectedId(ambulance.id)}>
+                <button key={ambulance.id} type="button" className={`ambulance-row ${selectedState ? "selected" : ""}`} onClick={() => setSelectedId(ambulance.id)} aria-pressed={selectedState}>
                   <div className="ambulance-row-main"><div><div className="ambulance-row-kicker">ACTIVE</div><strong>{ambulance.id}</strong><span>Emergency trip · {ambulance.nextSignal}</span></div><div className="ambulance-row-eta"><strong>{ambulance.etaSeconds}s</strong><span>TO NEXT SIGNAL</span></div></div>
                   <div className="ambulance-row-meta"><span>GPS <b className={ambulance.gpsState}>{ambulance.gpsState === "good" ? "Good" : "Degraded"}</b></span><span>Last seen {ambulance.lastSeenSecondsAgo}s ago</span><span className={fresh ? "fresh" : "stale"}>{fresh ? "Fresh" : "Check tracking"}</span></div>
                 </button>
