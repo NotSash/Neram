@@ -3,6 +3,7 @@ import './globals.css';
 import './mobile.css';
 import './ambulances-mobile.css';
 import './ambulance-mobile.css';
+import './home-redesign.css';
 import ServiceWorkerRegister from './ServiceWorkerRegister';
 
 export const metadata: Metadata = {
