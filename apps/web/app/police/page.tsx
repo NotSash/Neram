@@ -3,6 +3,7 @@
 import "../premium-ops.css";
 import "../interface-polish.css";
 import "../ops-nav.css";
+import "./police-elite.css";
 import { useState } from "react";
 import OpsNav from "../OpsNav";
 
