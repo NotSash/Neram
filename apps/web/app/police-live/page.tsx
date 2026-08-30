@@ -1,5 +1,6 @@
 "use client";
 
+import "../premium-ops.css";
 import { useEffect, useRef, useState } from "react";
 
 type Alert = {
