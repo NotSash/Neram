@@ -1,6 +1,7 @@
 "use client";
 
 import "../premium-ops.css";
+import "../interface-polish.css";
 import { useEffect, useRef, useState } from "react";
 
 const DEMO_POINTS = [
