@@ -4,13 +4,13 @@ import "../premium-ops.css";
 import "../interface-polish.css";
 import "../install-prompt.css";
 import "../ops-nav.css";
+import "./ambulance-field.css";
 import InstallPrompt from "../InstallPrompt";
 import OpsNav from "../OpsNav";
 import { useEffect, useRef, useState } from "react";
 
 const DEMO_POINTS=[{latitude:13.0458,longitude:80.2079},{latitude:13.0466,longitude:80.2087},{latitude:13.0472,longitude:80.2094},{latitude:13.0479,longitude:80.2103},{latitude:13.0486,longitude:80.211},{latitude:13.0494,longitude:80.2118},{latitude:13.0503,longitude:80.2127},{latitude:13.0511,longitude:80.2134},{latitude:13.052,longitude:80.2145},{latitude:13.0527,longitude:80.2153}];
 type Decision={shouldAlert:boolean;reason:string;signal:{id:string;name:string}|null;distanceToSignalMeters:number|null;estimatedEtaSeconds:number|null};type GpsState="simulation"|"device"|"denied"|"unavailable";
-
 export default function AmbulancePage(){
   const [active,setActive]=useState(false);const [online,setOnline]=useState(true);const [seconds,setSeconds]=useState(0);const [shared,setShared]=useState(false);const [pointIndex,setPointIndex]=useState(0);const [decision,setDecision]=useState<Decision|null>(null);const [lastUpdate,setLastUpdate]=useState<string|null>(null);const [sending,setSending]=useState(false);const [gpsState,setGpsState]=useState<GpsState>("simulation");const [accuracyMeters,setAccuracyMeters]=useState<number|null>(null);const [gpsError,setGpsError]=useState<string|null>(null);const watchId=useRef<number|null>(null);
   useEffect(()=>{const sync=()=>setOnline(navigator.onLine);sync();window.addEventListener("online",sync);window.addEventListener("offline",sync);return()=>{window.removeEventListener("online",sync);window.removeEventListener("offline",sync)}},[]);
