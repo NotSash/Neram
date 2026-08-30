@@ -2,6 +2,8 @@
 
 import "../premium-ops.css";
 import "../interface-polish.css";
+import "../install-prompt.css";
+import InstallPrompt from "../InstallPrompt";
 import { useEffect, useRef, useState } from "react";
 
 const DEMO_POINTS = [
@@ -32,5 +34,6 @@ export default function AmbulancePage(){
       {decision?.shouldAlert&&<div className="ambulance-alert-preview" role="status"><div><span>ALERT WINDOW OPEN</span><strong>{decision.signal?.name}</strong></div><div><strong>{decision.estimatedEtaSeconds??"—"}s</strong><small>ETA</small></div></div>}
     </section>
     <section className="ambulance-card"><div className="map-overline">TRIP DETAILS</div><div className="ambulance-fields"><label>Destination <input placeholder="Hospital or destination…" /></label><label>Priority <select defaultValue="emergency"><option value="emergency">Emergency</option><option value="critical">Critical</option></select></label></div><p className="ambulance-note">Training mode. Device GPS can be exercised in-browser, but no live police network or Supabase persistence is enabled yet.</p></section>
+    <InstallPrompt />
   </main>;
 }
