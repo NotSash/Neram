@@ -1,5 +1,5 @@
-const CACHE_NAME = "neram-shell-v1";
-const SHELL = ["/", "/ambulance", "/map", "/police"];
+const CACHE_NAME = "neram-shell-v2";
+const SHELL = ["/", "/ambulance", "/ambulances", "/map", "/police", "/police-live"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
