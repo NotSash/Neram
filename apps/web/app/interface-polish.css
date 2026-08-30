@@ -1,0 +1,8 @@
+/* Final interaction polish: shared across operational pages. */
+html{scroll-behavior:smooth}body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}::selection{background:rgba(115,168,255,.24);color:#fff}button,a{-webkit-tap-highlight-color:transparent}button:active{transform:translateY(1px)}
+.ops-shell,.live-shell,.ambulances-shell,.ambulance-shell{isolation:isolate}.ops-shell a,.live-shell a,.ambulances-shell a,.ambulance-shell a{outline-offset:4px}
+.ops-panel,.event-panel,.live-alert-card,.live-response-card,.ambulance-list,.ambulance-detail,.ambulance-card,.live-empty{contain:layout paint}
+.ambulance-row,.police-top-link,.notification-button,.primary-action,.secondary-action,.live-ack,.ambulance-start,.ambulance-stop,.ambulance-detail>a{touch-action:manipulation}
+.live-alert-card,.priority-alert{animation:nrSurfaceIn .48s var(--nr-ease) both}.ops-panel,.event-panel,.ambulance-card,.ambulance-list,.ambulance-detail{animation:nrSurfaceIn .52s var(--nr-ease) both}.ambulance-sharing,.ambulance-alert-preview{animation:nrSurfaceIn .32s var(--nr-ease) both}
+@keyframes nrSurfaceIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.live-alert-card,.priority-alert,.ops-panel,.event-panel,.ambulance-card,.ambulance-list,.ambulance-detail,.ambulance-sharing,.ambulance-alert-preview{animation:none}}
