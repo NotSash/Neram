@@ -1,98 +1,22 @@
 "use client";
 
 import "../premium-ops.css";
+import "../interface-polish.css";
 import { useEffect, useMemo, useState } from "react";
 
-type Ambulance = {
-  id: string;
-  tripId: string;
-  status: "active";
-  gpsState: "good" | "degraded";
-  lastSeenSecondsAgo: number;
-  latitude: number;
-  longitude: number;
-  speedMps: number;
-  nextSignal: string;
-  etaSeconds: number;
-};
+type Ambulance = { id:string; tripId:string; status:"active"; gpsState:"good"|"degraded"; lastSeenSecondsAgo:number; latitude:number; longitude:number; speedMps:number; nextSignal:string; etaSeconds:number };
 
-export default function AmbulancesPage() {
-  const [ambulances, setAmbulances] = useState<Ambulance[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [lastRefresh, setLastRefresh] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+function AmbulanceGlyph(){return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5h11.5l2 2.5v4H4zM7 10.5 8.5 7h5l2 3.5M8 17.2a1.8 1.8 0 1 1-3.6 0 1.8 1.8 0 0 1 3.6 0Zm11.6 0a1.8 1.8 0 1 1-3.6 0 1.8 1.8 0 0 1 3.6 0Z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>}
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const response = await fetch("/api/operations/ambulances", { cache: "no-store" });
-        if (!response.ok) throw new Error("Unable to load active ambulances");
-        const data = (await response.json()) as { ambulances: Ambulance[] };
-        if (cancelled) return;
-        setAmbulances(data.ambulances);
-        setSelectedId((current) => current && data.ambulances.some((item) => item.id === current) ? current : data.ambulances[0]?.id ?? null);
-        setLastRefresh(Date.now());
-        setError(null);
-      } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Unable to load active ambulances");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    void load();
-    const timer = window.setInterval(() => void load(), 5000);
-    return () => { cancelled = true; window.clearInterval(timer); };
-  }, []);
-
-  const selected = useMemo(() => ambulances.find((item) => item.id === selectedId) ?? ambulances[0] ?? null, [ambulances, selectedId]);
-  const isFeedStale = lastRefresh !== null && Date.now() - lastRefresh > 12000;
-
-  return (
-    <main className="ambulances-shell">
-      <div className="ambulances-container">
-        <header className="ambulances-header">
-          <a className="ambulances-brand" href="/" aria-label="Back to Neram home"><span className="brand-mark">N</span><span><strong>Neram</strong><small>ACTIVE AMBULANCES · CHENNAI</small></span></a>
-          <div className={`ambulances-feed-state ${isFeedStale || error ? "warning" : "ok"}`}><i /> {isFeedStale || error ? "Data degraded" : "Feed live · training"}</div>
-        </header>
-
-        <section className="ambulances-heading">
-          <div><div className="eyebrow">CITY OVERVIEW</div><h1>Active ambulances</h1><p>Only ongoing emergency trips are shown here.</p></div>
-          <div className="ambulances-count"><span>CURRENTLY ACTIVE</span><strong>{ambulances.length}</strong></div>
-        </section>
-
-        {error && <div className="ambulances-error" role="alert">{error} · Retrying automatically.</div>}
-
-        <div className="ambulances-grid">
-          <section className="ambulance-list">
-            {loading && <div className="ambulance-empty">Loading active ambulance feed…</div>}
-            {!loading && ambulances.length === 0 && <div className="ambulance-empty"><strong>No active ambulances</strong><p>Completed trips are intentionally excluded.</p></div>}
-            {ambulances.map((ambulance) => {
-              const selectedState = selectedId === ambulance.id;
-              const fresh = ambulance.lastSeenSecondsAgo <= 10;
-              return (
-                <button key={ambulance.id} type="button" className={`ambulance-row ${selectedState ? "selected" : ""}`} onClick={() => setSelectedId(ambulance.id)} aria-pressed={selectedState}>
-                  <div className="ambulance-row-main"><div><div className="ambulance-row-kicker">ACTIVE</div><strong>{ambulance.id}</strong><span>Emergency trip · {ambulance.nextSignal}</span></div><div className="ambulance-row-eta"><strong>{ambulance.etaSeconds}s</strong><span>TO NEXT SIGNAL</span></div></div>
-                  <div className="ambulance-row-meta"><span>GPS <b className={ambulance.gpsState}>{ambulance.gpsState === "good" ? "Good" : "Degraded"}</b></span><span>Last seen {ambulance.lastSeenSecondsAgo}s ago</span><span className={fresh ? "fresh" : "stale"}>{fresh ? "Fresh" : "Check tracking"}</span></div>
-                </button>
-              );
-            })}
-          </section>
-
-          <aside className="ambulance-detail">
-            <div className="ambulance-row-kicker">SELECTED AMBULANCE</div>
-            {selected ? <>
-              <h2>{selected.id}</h2><p>Approaching {selected.nextSignal}.</p>
-              <div className="ambulance-detail-metrics">
-                {[['ETA', `${selected.etaSeconds} seconds`], ['GPS quality', selected.gpsState === "good" ? "Good" : "Degraded"], ['Trip state', 'Active'], ['Speed', `${Math.round(selected.speedMps * 3.6)} km/h`], ['Control', 'Police advisory only']].map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}
-              </div>
-              <a href="/map">Open on map <span>↗</span></a>
-            </> : <p>Select an active ambulance to see its latest operational state.</p>}
-          </aside>
-        </div>
-        <p className="ambulances-footnote">Training data only · feed refreshes every 5 seconds · no signal control.</p>
-      </div>
-    </main>
-  );
+export default function AmbulancesPage(){
+  const [ambulances,setAmbulances]=useState<Ambulance[]>([]); const [selectedId,setSelectedId]=useState<string|null>(null); const [lastRefresh,setLastRefresh]=useState<number|null>(null); const [loading,setLoading]=useState(true); const [error,setError]=useState<string|null>(null);
+  useEffect(()=>{let cancelled=false;const load=async()=>{try{const response=await fetch("/api/operations/ambulances",{cache:"no-store"});if(!response.ok)throw new Error("Unable to load active ambulances");const data=(await response.json()) as {ambulances:Ambulance[]};if(cancelled)return;setAmbulances(data.ambulances);setSelectedId(current=>current&&data.ambulances.some(item=>item.id===current)?current:data.ambulances[0]?.id??null);setLastRefresh(Date.now());setError(null)}catch(err){if(!cancelled)setError(err instanceof Error?err.message:"Unable to load active ambulances")}finally{if(!cancelled)setLoading(false)}};void load();const timer=window.setInterval(()=>void load(),5000);return()=>{cancelled=true;window.clearInterval(timer)}},[]);
+  const selected=useMemo(()=>ambulances.find(item=>item.id===selectedId)??ambulances[0]??null,[ambulances,selectedId]); const isFeedStale=lastRefresh!==null&&Date.now()-lastRefresh>12000;
+  return <main className="ambulances-shell"><div className="ambulances-container"><header className="ambulances-header"><a className="ambulances-brand" href="/" aria-label="Back to Neram home"><span className="brand-mark">N</span><span><strong>Neram</strong><small>ACTIVE AMBULANCES · CHENNAI</small></span></a><div className={`ambulances-feed-state ${isFeedStale||error?"warning":"ok"}`}><i/>{isFeedStale||error?"Data degraded":"Feed live · training"}</div></header>
+    <section className="ambulances-heading"><div><div className="eyebrow">CITY OVERVIEW</div><h1>Active ambulances</h1><p>Only ongoing emergency trips are shown here.</p></div><div className="ambulances-count"><span>CURRENTLY ACTIVE</span><strong>{ambulances.length}</strong></div></section>
+    {error&&<div className="ambulances-error" role="alert">{error} · Retrying automatically.</div>}
+    <div className="ambulances-grid"><section className="ambulance-list">{loading&&<div className="ambulance-empty"><span className="ambulance-loading-dot"/>Loading active ambulance feed…</div>}{!loading&&ambulances.length===0&&<div className="ambulance-empty"><span className="ambulance-empty-mark"><AmbulanceGlyph/></span><strong>No active ambulances</strong><p>Completed trips are intentionally excluded.</p></div>}{ambulances.map(ambulance=>{const selectedState=selectedId===ambulance.id;const fresh=ambulance.lastSeenSecondsAgo<=10;return <button key={ambulance.id} type="button" className={`ambulance-row ${selectedState?"selected":""}`} onClick={()=>setSelectedId(ambulance.id)} aria-pressed={selectedState}><div className="ambulance-row-main"><div><div className="ambulance-row-kicker">ACTIVE</div><strong>{ambulance.id}</strong><span>Emergency trip · {ambulance.nextSignal}</span></div><div className="ambulance-row-eta"><strong>{ambulance.etaSeconds}s</strong><span>TO NEXT SIGNAL</span></div></div><div className="ambulance-row-meta"><span>GPS <b className={ambulance.gpsState}>{ambulance.gpsState==="good"?"Good":"Degraded"}</b></span><span>Last seen {ambulance.lastSeenSecondsAgo}s ago</span><span className={fresh?"fresh":"stale"}>{fresh?"Fresh":"Check tracking"}</span></div></button>})}</section>
+      <aside className="ambulance-detail"><div className="ambulance-row-kicker">SELECTED AMBULANCE</div>{selected?<><div className="ambulance-detail-id"><span className="ambulance-detail-icon"><AmbulanceGlyph/></span><div><h2>{selected.id}</h2><p>Approaching {selected.nextSignal}.</p></div></div><div className="ambulance-detail-metrics">{[['ETA',`${selected.etaSeconds} seconds`],['GPS quality',selected.gpsState==="good"?"Good":"Degraded"],['Trip state','Active'],['Speed',`${Math.round(selected.speedMps*3.6)} km/h`],['Control','Police advisory only']].map(([label,value])=><div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div><a href="/map">Open on map <span>↗</span></a></>:<p>Select an active ambulance to see its latest operational state.</p>}</aside>
+    </div><p className="ambulances-footnote">Training data only · feed refreshes every 5 seconds · no signal control.</p>
+  </div></main>
 }
