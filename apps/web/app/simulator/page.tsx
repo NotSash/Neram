@@ -1,85 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import "../premium-ops.css";
+import "../interface-polish.css";
+import "../ops-nav.css";
+import "./simulator-premium.css";
+import { useEffect, useMemo, useState } from "react";
+import OpsNav from "../OpsNav";
 import { DEMO_AMBULANCE_ROUTE, DEMO_SIGNALS, getNextSignal } from '../../../../packages/geo/src/simulation';
 import { initialBearingDegrees } from '../../../../packages/geo/src/bearing';
 
-const fmtEta = (seconds: number) => seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+const fmtEta=(seconds:number)=>seconds<60?`${seconds}s`:`${Math.floor(seconds/60)}m ${seconds%60}s`;
 
-export default function SimulatorPage() {
-  const [index, setIndex] = useState(0);
-  const [running, setRunning] = useState(false);
-  const current = DEMO_AMBULANCE_ROUTE[index];
-  const nextPoint = DEMO_AMBULANCE_ROUTE[Math.min(index + 1, DEMO_AMBULANCE_ROUTE.length - 1)];
-  const bearing = useMemo(() => initialBearingDegrees(current, nextPoint), [current, nextPoint]);
-  const nextSignal = getNextSignal(current, DEMO_AMBULANCE_ROUTE.slice(index + 1), DEMO_SIGNALS);
-  const demoSpeedMps = 11;
-  const eta = nextSignal ? Math.max(1, Math.round(nextSignal.distanceFromCurrent / demoSpeedMps)) : null;
-  const urgent = eta !== null && eta <= 45;
-
-  useEffect(() => {
-    if (!running) return;
-    const timer = window.setInterval(() => {
-      setIndex((value) => {
-        if (value >= DEMO_AMBULANCE_ROUTE.length - 1) { setRunning(false); return value; }
-        return value + 1;
-      });
-    }, 1500);
-    return () => window.clearInterval(timer);
-  }, [running]);
-
-  const start = () => { setIndex(0); setRunning(true); };
-
-  return (
-    <main className="sim-shell">
-      <header className="topbar">
-        <div className="brand"><span className="brand-mark">N</span><span>Neram</span></div>
-        <div className="top-status"><span className="live-dot" /> SIMULATION · CHENNAI</div>
-      </header>
-
-      <section className="content">
-        <div className="eyebrow">TRAFFIC POLICE · TRAINING MODE</div>
-        <div className="title-row">
-          <div><h1>Emergency approach</h1><p>See how Neram turns a live ambulance position into a signal alert.</p></div>
-          <button className="start-button" onClick={start}>{running ? 'Restart simulation' : 'Start simulation'}</button>
-        </div>
-
-        <div className="alert-card" data-urgent={urgent}>
-          <div className="alert-icon">!</div>
-          <div className="alert-copy">
-            <div className="alert-kicker">{urgent ? 'ACTION WINDOW' : 'UPCOMING AMBULANCE'}</div>
-            <h2>AMB-DEMO-01 approaching</h2>
-            <p>{nextSignal?.signal.name ?? 'No upcoming signal detected'}</p>
-          </div>
-          <div className="eta"><strong>{eta !== null ? fmtEta(eta) : '—'}</strong><span>estimated arrival</span></div>
-          <div className="alert-state">{urgent ? 'PREPARE' : 'MONITORING'}</div>
-        </div>
-
-        <div className="grid">
-          <article className="panel route-panel">
-            <div className="panel-head"><div><span className="label">LIVE ROUTE</span><h3>Ambulance movement</h3></div><span className="active-pill">● ACTIVE</span></div>
-            <div className="route-visual">
-              <div className="road-line" />
-              {DEMO_SIGNALS.map((signal, i) => <div className={`signal-node ${i === index ? 'passed' : ''}`} key={signal.id} style={{ left: `${18 + i * 31}%` }}><span>✦</span><small>{signal.name}</small></div>)}
-              <div className="ambulance-marker" style={{ left: `${8 + (index / (DEMO_AMBULANCE_ROUTE.length - 1)) * 82}%` }}>🚑</div>
-            </div>
-            <div className="route-meta"><span>Heading <b>{Math.round(bearing)}°</b></span><span>GPS sample <b>{index + 1}/{DEMO_AMBULANCE_ROUTE.length}</b></span><span>Tracking <b>Healthy</b></span></div>
-          </article>
-
-          <article className="panel signal-panel">
-            <div className="panel-head"><div><span className="label">NEXT SIGNAL</span><h3>{nextSignal?.signal.name ?? 'None'}</h3></div></div>
-            {nextSignal ? <>
-              <div className="metric"><span>Distance</span><strong>{Math.round(nextSignal.distanceFromCurrent)} m</strong></div>
-              <div className="metric"><span>Estimated arrival</span><strong>{eta !== null ? fmtEta(eta) : '—'}</strong></div>
-              <div className="metric"><span>Approach</span><strong>{Math.round(bearing)}° · forward</strong></div>
-              <div className="confidence"><span>Route confidence</span><strong>96%</strong><div><i style={{ width: '96%' }} /></div></div>
-            </> : <p className="empty">The simulation has no signal ahead.</p>}
-          </article>
-        </div>
-
-        <div className="pipeline"><span>GPS</span><b>→</b><span>Route</span><b>→</b><span>Next signal</span><b>→</b><strong>Police alert</strong></div>
-        <p className="demo-note">Demo coordinates only. No real Chennai signal or police assignment data is used here.</p>
-      </section>
-    </main>
-  );
+export default function SimulatorPage(){
+  const [index,setIndex]=useState(0);const [running,setRunning]=useState(false);
+  const current=DEMO_AMBULANCE_ROUTE[index];const nextPoint=DEMO_AMBULANCE_ROUTE[Math.min(index+1,DEMO_AMBULANCE_ROUTE.length-1)];
+  const bearing=useMemo(()=>initialBearingDegrees(current,nextPoint),[current,nextPoint]);const nextSignal=getNextSignal(current,DEMO_AMBULANCE_ROUTE.slice(index+1),DEMO_SIGNALS);const demoSpeedMps=11;const eta=nextSignal?Math.max(1,Math.round(nextSignal.distanceFromCurrent/demoSpeedMps)):null;const urgent=eta!==null&&eta<=45;
+  useEffect(()=>{if(!running)return;const timer=window.setInterval(()=>{setIndex(value=>{if(value>=DEMO_AMBULANCE_ROUTE.length-1){setRunning(false);return value}return value+1})},1500);return()=>window.clearInterval(timer)},[running]);
+  const start=()=>{setIndex(0);setRunning(true)};
+  return <main className="ns-sim"><OpsNav section="EMERGENCY SIMULATOR" status={running?"RUNNING":"TRAINING"}/><div className="ns-sim-container">
+    <section className="ns-sim-hero"><div><div className="ns-sim-kicker">TRAFFIC POLICE · CONTROLLED TRAINING</div><h1>Emergency approach</h1><p>See how one live ambulance position becomes one precise signal warning.</p></div><button className="ns-sim-start" type="button" onClick={start}>{running?"Restart simulation":"Start simulation"}<span>→</span></button></section>
+    <section className="ns-sim-alert" data-urgent={urgent}><div className="ns-sim-alert-icon">!</div><div className="ns-sim-alert-copy"><div className="ns-sim-alert-kicker">{urgent?"ACTION WINDOW":"UPCOMING AMBULANCE"}</div><h2>AMB-DEMO-01 approaching</h2><p>{nextSignal?.signal.name??"No upcoming signal detected"}</p></div><div className="ns-sim-eta"><strong>{eta!==null?fmtEta(eta):"—"}</strong><span>estimated arrival</span></div><div className="ns-sim-state" data-urgent={urgent}>{urgent?"PREPARE":"MONITORING"}</div></section>
+    <div className="ns-sim-grid"><article className="ns-sim-panel"><header className="ns-sim-panel-head"><div><div className="ns-sim-kicker">LIVE ROUTE</div><h3>Ambulance movement</h3></div><span>{running?"● MOVING":"● READY"}</span></header><div className="ns-sim-route" aria-label="Simulated ambulance route"><div className="ns-sim-route-grid"/><div className="ns-sim-road ns-road-one"/><div className="ns-sim-road ns-road-two"/><div className="ns-sim-road ns-road-three"/><div className="ns-sim-route-line"/>{DEMO_SIGNALS.map((signal,i)=><div className={`ns-sim-signal ${i<index?"passed":""}`} key={signal.id} style={{left:`${18+i*31}%`}}><span>✦</span><small>{signal.name}</small></div>)}<div className="ns-sim-vehicle" style={{left:`${8+(index/(DEMO_AMBULANCE_ROUTE.length-1))*82}%`}}>AMB</div><div className="ns-sim-route-label">DEMO CORRIDOR · CHENNAI</div><div className="ns-sim-route-status"><i/>{running?"LIVE SIMULATION":"READY"}</div></div><div className="ns-sim-meta"><span>Heading <b>{Math.round(bearing)}°</b></span><span>GPS sample <b>{index+1}/{DEMO_AMBULANCE_ROUTE.length}</b></span><span>Tracking <b className="good">Healthy</b></span></div></article>
+      <article className="ns-sim-panel"><header className="ns-sim-panel-head"><div><div className="ns-sim-kicker">NEXT SIGNAL</div><h3>{nextSignal?.signal.name??"None"}</h3></div></header>{nextSignal?<><div className="ns-sim-metric"><span>Distance</span><strong>{Math.round(nextSignal.distanceFromCurrent)} m</strong></div><div className="ns-sim-metric"><span>Estimated arrival</span><strong>{eta!==null?fmtEta(eta):"—"}</strong></div><div className="ns-sim-metric"><span>Approach</span><strong>{Math.round(bearing)}° · forward</strong></div><div className="ns-sim-confidence"><div><span>Route confidence</span><strong>96%</strong></div><div><i style={{width:"96%"}}/></div></div></>:<p className="ns-sim-note">The simulation has no signal ahead.</p>}</article>
+    </div><div className="ns-sim-pipeline"><span>GPS</span><b>→</b><span>Route</span><b>→</b><span>Next signal</span><b>→</b><strong>Police alert</strong></div><p className="ns-sim-note">Demo coordinates only. No real Chennai signal or police assignment data is used here.</p>
+  </div></main>;
 }
