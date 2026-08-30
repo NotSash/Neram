@@ -1,10 +1,22 @@
 {
+  "id": "/ambulance",
   "name": "Neram Chennai Emergency Network",
   "short_name": "Neram",
   "description": "Emergency ambulance coordination for Chennai traffic police.",
   "start_url": "/ambulance",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#070a10",
   "theme_color": "#070a10",
-  "lang": "en-IN"
+  "lang": "en-IN",
+  "categories": ["navigation", "medical"],
+  "icons": [
+    {
+      "src": "/icons/neram-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
