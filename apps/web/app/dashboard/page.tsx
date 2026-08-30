@@ -1,95 +1,19 @@
 "use client";
 
-import "./dashboard.css";
+import "../dashboard-premium.css";
+import "../interface-polish.css";
+import "../ops-nav.css";
 import { useMemo, useState } from "react";
+import OpsNav from "../OpsNav";
 
-const DEMO_ALERTS = [
-  { id: "A-204", ambulance: "AMB-DEMO-01", signal: "Demo Signal B", eta: 32, distance: 410, status: "PENDING", direction: "South-east", confidence: 96 },
-  { id: "A-203", ambulance: "AMB-DEMO-02", signal: "Demo Signal A", eta: 71, distance: 820, status: "ACKNOWLEDGED", direction: "North-east", confidence: 91 },
-];
+const DEMO_ALERTS=[{id:"A-204",ambulance:"AMB-DEMO-01",signal:"Demo Signal B",eta:32,distance:410,status:"PENDING",direction:"South-east",confidence:96},{id:"A-203",ambulance:"AMB-DEMO-02",signal:"Demo Signal A",eta:71,distance:820,status:"ACKNOWLEDGED",direction:"North-east",confidence:91}];
 
-export default function DashboardPage() {
-  const [selected, setSelected] = useState(DEMO_ALERTS[0]);
-  const [acknowledged, setAcknowledged] = useState(false);
-  const active = useMemo(() => DEMO_ALERTS.filter((alert) => alert.status === "PENDING").length - (acknowledged ? 1 : 0), [acknowledged]);
-
-  return (
-    <main className="ops-shell">
-      <header className="ops-topbar">
-        <div className="ops-brand"><span className="ops-mark">N</span><span>Neram</span><span className="ops-city">CHENNAI</span></div>
-        <div className="ops-live"><span /> ALL SYSTEMS NOMINAL</div>
-      </header>
-
-      <div className="ops-layout">
-        <aside className="ops-sidebar">
-          <div className="sidebar-label">TRAFFIC OPERATIONS</div>
-          <nav>
-            <a className="nav-item active" href="/dashboard"><span>◉</span> Signal watch</a>
-            <a className="nav-item" href="/map"><span>⌁</span> Live map</a>
-          </nav>
-          <div className="sidebar-footer">
-            <div className="mini-label">STATION</div>
-            <strong>Chennai Central</strong>
-            <span>Training environment</span>
-          </div>
-        </aside>
-
-        <section className="ops-main">
-          <div className="ops-heading">
-            <div>
-              <div className="eyebrow">SIGNAL WATCH / TRAINING</div>
-              <h1>Approaching ambulances</h1>
-              <p>Warnings are advisory. Traffic control remains with the officer at the signal.</p>
-            </div>
-            <a className="map-link" href="/map">Open live map <span>↗</span></a>
-          </div>
-
-          <div className="ops-stats">
-            <div><span>ACTIVE WARNINGS</span><strong>{Math.max(active, 0)}</strong></div>
-            <div><span>MONITORED SIGNALS</span><strong>3</strong></div>
-            <div><span>LAST LOCATION</span><strong>7s ago</strong></div>
-          </div>
-
-          <div className="alert-stack">
-            {DEMO_ALERTS.map((alert) => {
-              const isSelected = selected.id === alert.id;
-              const isPending = alert.status === "PENDING" && !(acknowledged && alert.id === selected.id);
-              return (
-                <button key={alert.id} className={`ops-alert ${isSelected ? "selected" : ""}`} onClick={() => { setSelected(alert); if (alert.id !== selected.id) setAcknowledged(false); }}>
-                  <div className={`alert-severity ${isPending ? "urgent" : "normal"}`}>{isPending ? "!" : "✓"}</div>
-                  <div className="alert-main">
-                    <div className="alert-row"><span className="alert-id">#{alert.id}</span><span className={`status ${isPending ? "pending" : "ack"}`}>{isPending ? "ACTION NEEDED" : "ACKNOWLEDGED"}</span></div>
-                    <strong>{alert.signal}</strong>
-                    <span>{alert.ambulance} · {alert.direction}</span>
-                  </div>
-                  <div className="alert-eta"><strong>{alert.eta}s</strong><span>ETA</span></div>
-                  <div className="alert-distance"><strong>{alert.distance}m</strong><span>distance</span></div>
-                  <div className="chevron">›</div>
-                </button>
-              );
-            })}
-          </div>
-
-          <section className="detail-card">
-            <div className="detail-head">
-              <div><span className="eyebrow">SELECTED WARNING</span><h2>{selected.signal}</h2><p>{selected.ambulance} · approaching from {selected.direction.toLowerCase()}</p></div>
-              <div className={`big-status ${acknowledged && selected.id === DEMO_ALERTS[0].id ? "acknowledged" : "warning"}`}>{acknowledged && selected.id === DEMO_ALERTS[0].id ? "ACKNOWLEDGED" : "ACTION NEEDED"}</div>
-            </div>
-            <div className="detail-metrics">
-              <div><span>ETA</span><strong>{acknowledged && selected.id === DEMO_ALERTS[0].id ? "31s" : `${selected.eta}s`}</strong></div>
-              <div><span>DISTANCE</span><strong>{selected.distance} m</strong></div>
-              <div><span>ROUTE CONFIDENCE</span><strong>{selected.confidence}%</strong></div>
-            </div>
-            <div className="detail-note"><span className="note-icon">i</span><p>Neram is notifying the assigned officer. Take the appropriate traffic-control action when safe. Neram does not control the signal.</p></div>
-            <div className="detail-actions">
-              <button className="ack-button" onClick={() => setAcknowledged(true)} disabled={!(!acknowledged && selected.id === DEMO_ALERTS[0].id)}>Acknowledge warning</button>
-              <a className="secondary-button" href="/map">View on map</a>
-            </div>
-          </section>
-
-          <div className="event-strip"><span><i className="event-dot" /> Location received 7s ago</span><span>GPS accuracy ±12m</span><span>Training data</span></div>
-        </section>
-      </div>
-    </main>
-  );
+export default function DashboardPage(){
+  const [selected,setSelected]=useState(DEMO_ALERTS[0]);const [acknowledged,setAcknowledged]=useState(false);const active=useMemo(()=>DEMO_ALERTS.filter(a=>a.status==="PENDING").length-(acknowledged?1:0),[acknowledged]);const selectedIsPrimary=selected.id===DEMO_ALERTS[0].id;const selectedAck=acknowledged&&selectedIsPrimary;
+  return <main className="nd-dashboard"><OpsNav section="CITY TRAFFIC OPERATIONS" status={active>0?"ACTION NEEDED":"NOMINAL"}/><div className="nd-container">
+    <section className="nd-heading"><div><div className="nd-kicker">CITY OPERATIONS · TRAINING</div><h1>Approaching ambulances</h1><p>Advance warnings for traffic officers. Signal control remains with the officer.</p></div><a className="nd-heading-link" href="/map">Open live map <span>↗</span></a></section>
+    <section className="nd-stats"><div className="nd-stat"><span>ACTIVE WARNINGS</span><strong>{Math.max(active,0)}</strong><small>requiring attention</small></div><div className="nd-stat"><span>MONITORED SIGNALS</span><strong>3</strong><small>training corridor</small></div><div className="nd-stat good"><span>LAST LOCATION</span><strong>7s</strong><small>GPS sample age</small></div></section>
+    <div className="nd-grid"><section className="nd-card"><header className="nd-card-head"><div><div className="nd-kicker">ALERT QUEUE</div><h2>Signal warnings</h2><p>Select a warning to inspect its route context.</p></div><span className="nd-feed-pill"><i/> LIVE · 5s</span></header><div className="nd-alert-list">{DEMO_ALERTS.map(alert=>{const isSelected=selected.id===alert.id;const pending=alert.status==="PENDING"&&!selectedAck;return <button key={alert.id} type="button" className={`nd-alert ${isSelected?"selected":""} ${pending?"pending":""}`} onClick={()=>{setSelected(alert);if(alert.id!==DEMO_ALERTS[0].id)setAcknowledged(false)}} aria-pressed={isSelected}><span className="nd-alert-icon">{pending?"!":"✓"}</span><span className="nd-alert-main"><span className="nd-alert-label">#{alert.id} · {pending?"ACTION NEEDED":"ACKNOWLEDGED"}</span><strong>{alert.signal}</strong><p>{alert.ambulance} · from {alert.direction.toLowerCase()}</p></span><span className="nd-alert-eta"><strong>{alert.eta}s</strong><span>ETA</span></span></button>})}</div><div className="nd-timeline"><span><i/>Location feed healthy</span><span>GPS accuracy ±12m</span><span>Training data</span></div></section>
+      <aside className="nd-card nd-detail"><div className="nd-kicker">SELECTED WARNING</div><h2>{selected.signal}</h2><p className="nd-detail-copy">{selected.ambulance} · approaching from {selected.direction.toLowerCase()}</p><span className={`nd-detail-state ${selectedAck?"ack":""}`}>{selectedAck?"ACKNOWLEDGED":"ACTION NEEDED"}</span><div className="nd-detail-metrics"><div><span>ETA</span><strong>{selectedAck?"31s":`${selected.eta}s`}</strong></div><div><span>DISTANCE</span><strong>{selected.distance}m</strong></div><div><span>CONFIDENCE</span><strong>{selected.confidence}%</strong></div></div><div className="nd-note"><span>i</span><p>Neram is notifying the assigned officer. Take the appropriate traffic-control action when safe.</p></div><div className="nd-actions"><button type="button" onClick={()=>setAcknowledged(true)} disabled={!(!selectedAck&&selectedIsPrimary)}>Acknowledge warning</button><a href="/map">View on map ↗</a></div></aside></div>
+  </div></main>;
 }
