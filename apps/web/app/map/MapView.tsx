@@ -8,6 +8,7 @@ import { getSupabaseBrowserClient } from "../../lib/supabase/browser";
 
 type Point = { latitude: number; longitude: number };
 type Signal = Point & { id: string; name: string; status: "next" | "upcoming" | "passed" };
+type ReferenceSignal = Point & { id: string; name: string; sourceRef: string };
 type RouteResponse = { distanceMeters: number; durationSeconds: number; shape: Array<{ lat: number; lon: number }> };
 type SignalRecord = { id: string; name: string; latitude: number; longitude: number };
 
@@ -47,6 +48,7 @@ export default function MapView() {
   const [running, setRunning] = useState(true);
   const [route, setRoute] = useState<Point[]>(DEMO_ROUTE);
   const [signalsBase, setSignalsBase] = useState<SignalRecord[]>(DEMO_SIGNALS);
+  const [referenceSignals, setReferenceSignals] = useState<ReferenceSignal[]>([]);
   const [signalsSource, setSignalsSource] = useState<"demo" | "verified">("demo");
   const [routeStatus, setRouteStatus] = useState<"routing" | "live" | "fallback">("routing");
 
@@ -133,6 +135,36 @@ export default function MapView() {
   }, [position.latitude, position.longitude]);
 
   useEffect(() => {
+    let active = true;
+    const loadReferenceSignals = async () => {
+      try {
+        const response = await fetch("/api/signal-candidates", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = (await response.json()) as { signals?: Array<{ sourceRef: string; name: string; latitude: number; longitude: number }> };
+        if (!active || !data.signals?.length) return;
+        const center = DEMO_ROUTE[Math.floor(DEMO_ROUTE.length / 2)];
+        const nearby = data.signals
+          .filter((signal) => Math.abs(signal.latitude - center.latitude) <= 0.035 && Math.abs(signal.longitude - center.longitude) <= 0.045)
+          .slice(0, 250)
+          .map((signal) => ({
+            id: `osm-${signal.sourceRef}`,
+            name: signal.name,
+            sourceRef: signal.sourceRef,
+            latitude: signal.latitude,
+            longitude: signal.longitude,
+          }));
+        setReferenceSignals(nearby);
+      } catch {
+        // Candidate layer is optional and never affects operational alerting.
+      }
+    };
+    void loadReferenceSignals();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!running) return;
     const timer = window.setInterval(() => {
       setIndex((value) => {
@@ -152,6 +184,16 @@ export default function MapView() {
         <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <MapController position={position} />
         <Polyline positions={line} pathOptions={{ color: "#2563eb", weight: 6, opacity: 0.8 }} />
+        {referenceSignals.map((item) => (
+          <CircleMarker
+            key={item.id}
+            center={[item.latitude, item.longitude]}
+            radius={4}
+            pathOptions={{ color: "#8a95a5", fillColor: "#8a95a5", fillOpacity: 0.55, weight: 1 }}
+          >
+            <Tooltip direction="top">{item.name} · OSM candidate · UNVERIFIED</Tooltip>
+          </CircleMarker>
+        ))}
         {signals.map((item) => (
           <CircleMarker
             key={item.id}
@@ -205,8 +247,9 @@ export default function MapView() {
         <span><i className="legend-dot signal" /> Next signal</span>
         <span><i className="legend-dot passed" /> Other signal</span>
         <span><i className="legend-line" /> Route</span>
+        {referenceSignals.length > 0 && <span><i className="legend-dot reference" /> OSM candidate</span>}
       </div>
-      <div className="map-disclaimer">Training simulation · {signalsSource === "verified" ? "Verified signal data" : "Demo geometry only"} · Police alert is advisory</div>
+      <div className="map-disclaimer">Training simulation · OSM candidates are unverified · Police alert is advisory</div>
     </div>
   );
 }
