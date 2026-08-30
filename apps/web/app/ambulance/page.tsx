@@ -4,7 +4,6 @@ import "../premium-ops.css";
 import "../interface-polish.css";
 import "../install-prompt.css";
 import "../ops-nav.css";
-import "./ambulance-field.css";
 import InstallPrompt from "../InstallPrompt";
 import OpsNav from "../OpsNav";
 import { useEffect, useRef, useState } from "react";
