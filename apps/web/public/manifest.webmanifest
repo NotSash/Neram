@@ -13,6 +13,11 @@
   "lang": "en-IN",
   "categories": ["navigation", "medical"],
   "prefer_related_applications": false,
+  "shortcuts": [
+    {"name":"Live alerts","short_name":"Alerts","url":"/police-live"},
+    {"name":"Ambulance mode","short_name":"Ambulance","url":"/ambulance"},
+    {"name":"Live response map","short_name":"Map","url":"/map"}
+  ],
   "icons": [
     {"src":"/icons/neram-192.svg","sizes":"192x192","type":"image/svg+xml","purpose":"any maskable"},
     {"src":"/icons/neram-512.svg","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"},
