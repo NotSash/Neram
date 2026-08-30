@@ -1,0 +1,10 @@
+{
+  "name": "Neram Chennai Emergency Network",
+  "short_name": "Neram",
+  "description": "Emergency ambulance coordination for Chennai traffic police.",
+  "start_url": "/ambulance",
+  "display": "standalone",
+  "background_color": "#070a10",
+  "theme_color": "#070a10",
+  "lang": "en-IN"
+}
