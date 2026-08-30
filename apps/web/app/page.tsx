@@ -1,3 +1,5 @@
+import "./home-motion.css";
+
 function ArrowIcon(){return <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M4 10h11M10.5 5.5 15 10l-4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
 function LiveIcon(){return <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8.4 7.2a4 4 0 0 0 0 9.6M15.6 7.2a4 4 0 0 1 0 9.6M10.8 9.6a2.2 2.2 0 0 0 0 4.8M13.2 9.6a2.2 2.2 0 0 1 0 4.8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/><circle cx="12" cy="12" r="1.35" fill="currentColor"/></svg>}
 function MapPinIcon(){return <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20s6-5.2 6-10a6 6 0 1 0-12 0c0 4.8 6 10 6 10Z" fill="none" stroke="currentColor" strokeWidth="1.6"/><circle cx="12" cy="10" r="2" fill="none" stroke="currentColor" strokeWidth="1.6"/></svg>}
