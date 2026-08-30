@@ -1,3 +1,4 @@
+import "../premium-ops.css";
 import MapShell from './MapShell';
 
 export default function MapPage() {
