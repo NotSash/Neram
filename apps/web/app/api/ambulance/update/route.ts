@@ -49,7 +49,17 @@ export async function POST(request: NextRequest) {
     const { error: insertError } = await supabase.from("ambulance_locations").insert({ trip_id: trip.id, ambulance_id: ambulance.id, location: `SRID=4326;POINT(${body.longitude} ${body.latitude})`, heading_degrees: typeof body.headingDegrees === "number" ? body.headingDegrees : null, speed_mps: speedMps, accuracy_meters: typeof body.gpsQuality === "string" && body.gpsQuality === "good" ? 20 : 60 });
     if (insertError) return NextResponse.json({ error: insertError.message }, { status: 400 });
 
-    return NextResponse.json({ ambulanceId: ambulance.code, tripId: trip.id, decision: null, mode: "verified", receivedAt: new Date().toISOString() });
+    const { data: decisionData, error: decisionError } = await supabase.rpc("process_verified_ambulance_update", {
+      p_trip_id: trip.id,
+      p_ambulance_id: ambulance.id,
+      p_latitude: body.latitude,
+      p_longitude: body.longitude,
+      p_speed_mps: speedMps,
+      p_accuracy_meters: typeof body.gpsQuality === "string" && body.gpsQuality === "good" ? 20 : 60,
+    });
+    if (decisionError) return NextResponse.json({ error: decisionError.message }, { status: 400 });
+
+    return NextResponse.json({ ambulanceId: ambulance.code, tripId: trip.id, decision: decisionData, mode: "verified", receivedAt: new Date().toISOString() });
   } catch (error) {
     console.error("Neram ambulance update error", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to process update" }, { status: 400 });
