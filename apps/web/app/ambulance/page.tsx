@@ -152,7 +152,7 @@ export default function AmbulancePage() {
   return (
     <main className="ambulance-shell">
       <header className="ambulance-header">
-        <div className="ops-brand"><span className="brand-mark">N</span><span>Neram</span><small>AMBULANCE MODE</small></div>
+        <a className="ops-brand" href="/" aria-label="Back to Neram home"><span className="brand-mark">N</span><span>Neram</span><small>AMBULANCE MODE</small></a>
         <span className={`ambulance-status ${active ? "is-live" : ""}`}><i /> {active ? "EMERGENCY ACTIVE" : "READY"}</span>
       </header>
 
