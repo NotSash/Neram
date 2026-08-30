@@ -6,6 +6,16 @@ export const metadata: Metadata = {
   title: 'Neram | Chennai Emergency Response',
   description: 'Emergency ambulance coordination for Chennai traffic police.',
   manifest: '/manifest.webmanifest',
+  icons: {
+    icon: '/icons/neram-icon.svg',
+    shortcut: '/icons/neram-icon.svg',
+    apple: '/icons/neram-icon.svg',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Neram',
+  },
 };
 
 export const viewport: Viewport = {
