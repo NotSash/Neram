@@ -20,10 +20,14 @@ type OverpassElement = {
 };
 
 export async function GET() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
+
   try {
     const response = await fetch(`${OVERPASS_URL}?data=${encodeURIComponent(QUERY)}`, {
       headers: { "user-agent": "Neram-Chennai/0.1 (+https://neram-chennai.vercel.app)" },
       next: { revalidate: 3600 },
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -48,9 +52,14 @@ export async function GET() {
       })
       .filter(Boolean);
 
-    return NextResponse.json({ count: signals.length, signals }, { headers: { "cache-control": "public, s-maxage=3600" } });
+    return NextResponse.json(
+      { count: signals.length, signals },
+      { headers: { "cache-control": "public, s-maxage=3600, stale-while-revalidate=86400" } },
+    );
   } catch (error) {
     console.error("Neram signal candidate error", error);
     return NextResponse.json({ error: "Signal candidate source unavailable" }, { status: 502 });
+  } finally {
+    clearTimeout(timeout);
   }
 }
