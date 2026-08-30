@@ -1,6 +1,7 @@
 "use client";
 
 import "../premium-ops.css";
+import "../interface-polish.css";
 import { useState } from "react";
 
 function ArrowIcon(){return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M10.5 5.5 15 10l-4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
