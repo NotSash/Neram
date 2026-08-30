@@ -3,7 +3,7 @@
 import "../premium-ops.css";
 import "../interface-polish.css";
 import "../ops-nav.css";
-import "./simulator-premium.css";
+import "../simulator-premium.css";
 import { useEffect, useMemo, useState } from "react";
 import OpsNav from "../OpsNav";
 import { DEMO_AMBULANCE_ROUTE, DEMO_SIGNALS, getNextSignal } from '../../../../packages/geo/src/simulation';
