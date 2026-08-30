@@ -1,4 +1,5 @@
 import "../premium-ops.css";
+import "../interface-polish.css";
 import MapShell from './MapShell';
 
 export default function MapPage() {
