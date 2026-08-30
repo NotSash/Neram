@@ -5,7 +5,6 @@
   button, a { touch-action: manipulation; }
   button { min-height: 44px; }
 
-  /* Home */
   .home-nav { height: auto; min-height: 64px; padding: 12px 16px; gap: 12px; }
   .home-nav .ops-brand { flex: 1; min-width: 0; }
   .home-nav .ops-brand small { display: none; }
@@ -21,7 +20,6 @@
   .home-principles { width: min(100% - 32px, 900px); grid-template-columns: 1fr; border-radius: 14px; }
   .home-principles > div { padding: 18px; }
 
-  /* Shared operations surfaces */
   .ops-topbar { height: 60px; padding: 0 16px; }
   .ops-city { display: none; }
   .ops-connection { font-size: 9px; }
@@ -49,7 +47,6 @@
   .primary-action, .secondary-action { min-height: 48px; }
   .event-panel { margin-top: 12px; }
 
-  /* Dashboard */
   .ops-main { min-width: 0; }
   .ops-stats { grid-template-columns: repeat(3, 1fr) !important; gap: 1px !important; }
   .ops-stats > div { min-width: 0; padding: 12px 10px !important; }
@@ -68,7 +65,6 @@
   .detail-actions { display: grid !important; grid-template-columns: 1fr; gap: 8px; }
   .event-strip { flex-wrap: wrap !important; gap: 8px 14px !important; line-height: 1.4; }
 
-  /* Map */
   .map-page { padding: 0; }
   .map-header { width: auto; margin: 0; padding: 16px; display: block; }
   .map-header h1 { font-size: 27px; letter-spacing: -1px; }
@@ -90,8 +86,26 @@
   .map-disclaimer { left: 10px; right: 10px; bottom: 10px; text-align: center; }
   .map-alert-banner { left: 10px !important; right: 10px !important; top: 118px !important; padding: 10px 11px !important; font-size: 9px !important; line-height: 1.35; }
 
-  /* Live police console */
   main[style*="max-width: 1000px"] { padding: 16px !important; }
+
+  /* Ambulance PWA surface */
+  .ambulance-shell { min-height: 100svh !important; padding-bottom: max(24px, env(safe-area-inset-bottom)) !important; }
+  .ambulance-header { padding: 12px 16px !important; min-height: 60px; }
+  .ambulance-header .ops-brand small { display: none !important; }
+  .ambulance-status { font-size: 9px !important; }
+  .ambulance-card { margin: 10px 12px !important; padding: 18px !important; border-radius: 16px !important; }
+  .ambulance-hero h1 { font-size: clamp(32px, 9vw, 42px) !important; line-height: 1.02 !important; letter-spacing: -1.4px !important; }
+  .ambulance-hero > p { font-size: 13px !important; line-height: 1.55 !important; }
+  .ambulance-meta-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; margin-top: 18px !important; }
+  .ambulance-meta-grid > div { padding: 12px !important; }
+  .ambulance-start, .ambulance-stop { width: 100% !important; min-height: 56px !important; border-radius: 13px !important; font-size: 14px !important; margin-top: 12px !important; }
+  .ambulance-sharing { display: grid !important; grid-template-columns: auto 1fr; gap: 10px !important; padding: 14px !important; }
+  .ambulance-sharing > button { grid-column: 1 / -1; width: 100%; min-height: 46px; }
+  .ambulance-alert-preview { grid-template-columns: 1fr auto !important; gap: 12px !important; padding: 14px !important; }
+  .ambulance-fields { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .ambulance-fields label { font-size: 11px !important; }
+  .ambulance-fields input, .ambulance-fields select { min-height: 48px !important; font-size: 16px !important; }
+  .ambulance-note { font-size: 10px !important; line-height: 1.5 !important; }
 }
 
 @media (max-width: 420px) {
@@ -102,6 +116,12 @@
   .ops-alert { grid-template-columns: 34px 1fr auto !important; }
   .alert-severity { width: 30px !important; height: 30px !important; }
   .detail-metrics { gap: 1px !important; }
+  .ambulance-card { margin-inline: 10px !important; padding: 16px !important; }
+  .ambulance-meta-grid strong { font-size: 13px !important; }
+}
+
+@media (display-mode: standalone) {
+  .ambulance-header { padding-top: max(12px, env(safe-area-inset-top)) !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
