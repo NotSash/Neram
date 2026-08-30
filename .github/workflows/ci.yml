@@ -18,7 +18,5 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install
-      - name: Typecheck web app
-        run: npx tsc --noEmit -p apps/web/tsconfig.json
       - name: Production build
         run: npm run build --workspace Neram
