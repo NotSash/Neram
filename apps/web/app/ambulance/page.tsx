@@ -27,6 +27,7 @@ type GpsState = "simulation" | "device" | "denied" | "unavailable";
 
 export default function AmbulancePage() {
   const [active, setActive] = useState(false);
+  const [online, setOnline] = useState(true);
   const [seconds, setSeconds] = useState(0);
   const [shared, setShared] = useState(false);
   const [pointIndex, setPointIndex] = useState(0);
@@ -37,6 +38,17 @@ export default function AmbulancePage() {
   const [accuracyMeters, setAccuracyMeters] = useState<number | null>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const watchId = useRef<number | null>(null);
+
+  useEffect(() => {
+    const sync = () => setOnline(navigator.onLine);
+    sync();
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", sync);
+    return () => {
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", sync);
+    };
+  }, []);
 
   useEffect(() => {
     if (!active) return;
@@ -143,7 +155,20 @@ export default function AmbulancePage() {
     setGpsError(null);
   };
 
+  const startTrip = () => {
+    if (!online) {
+      setGpsError("No internet connection. Neram cannot send live ambulance updates right now.");
+      return;
+    }
+    setGpsError(null);
+    setActive(true);
+  };
+
   const enableDeviceGps = () => {
+    if (!online) {
+      setGpsError("Reconnect to the internet before enabling live GPS updates.");
+      return;
+    }
     setGpsError(null);
     setGpsState("device");
     setShared(true);
@@ -156,6 +181,8 @@ export default function AmbulancePage() {
         <span className={`ambulance-status ${active ? "is-live" : ""}`}><i /> {active ? "EMERGENCY ACTIVE" : "READY"}</span>
       </header>
 
+      {!online && <div className="ambulance-connection-loss" role="alert"><span>!</span><div><strong>You're offline</strong><p>Live ambulance updates are paused until the connection returns.</p></div></div>}
+
       <section className="ambulance-card ambulance-hero">
         <div className="map-overline">AUTHORIZED AMBULANCE · TRAINING</div>
         <h1>{active ? "Location sharing is on." : "Start an emergency trip."}</h1>
@@ -166,8 +193,8 @@ export default function AmbulancePage() {
           <div><span>TRIP TIME</span><strong>{String(Math.floor(seconds / 60)).padStart(2, "0")}:{String(seconds % 60).padStart(2, "0")}</strong></div>
         </div>
 
-        <button type="button" className={active ? "ambulance-stop" : "ambulance-start"} onClick={() => active ? resetTrip() : setActive(true)}>
-          <span>{active ? "End emergency trip" : "Start emergency trip"}</span>
+        <button type="button" disabled={!active && !online} className={active ? "ambulance-stop" : "ambulance-start"} onClick={() => active ? resetTrip() : startTrip()}>
+          <span>{active ? "End emergency trip" : online ? "Start emergency trip" : "Waiting for connection"}</span>
           <span>{active ? "■" : "→"}</span>
         </button>
 
