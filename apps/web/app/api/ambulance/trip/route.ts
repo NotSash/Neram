@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { allowRequest } from "../../../../lib/rate-limit";
 
 function supabaseFromRequest(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -23,17 +24,28 @@ async function getVerifiedAmbulance(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (!allowRequest(`ambulance-trip-start:${ip}`, 10, 60_000)) {
+    return NextResponse.json({ error: "Too many trip-start requests. Try again shortly." }, { status: 429 });
+  }
+
   const { supabase, ambulance, error } = await getVerifiedAmbulance(request);
   if (error || !supabase || !ambulance) return error ?? NextResponse.json({ error: "Unable to start trip" }, { status: 500 });
   const body = (await request.json().catch(() => ({}))) as { destinationName?: string };
+  const destinationName = typeof body.destinationName === "string" ? body.destinationName.trim().slice(0, 160) : null;
   const { data: existing } = await supabase.from("emergency_trips").select("id,status,destination_name,started_at").eq("ambulance_id", ambulance.id).eq("status", "active").maybeSingle();
   if (existing) return NextResponse.json({ trip: existing, reused: true, ambulanceCode: ambulance.code });
-  const { data: trip, error: insertError } = await supabase.from("emergency_trips").insert({ ambulance_id: ambulance.id, destination_name: body.destinationName?.trim() || null, status: "active" }).select("id,status,destination_name,started_at").single();
+  const { data: trip, error: insertError } = await supabase.from("emergency_trips").insert({ ambulance_id: ambulance.id, destination_name: destinationName || null, status: "active" }).select("id,status,destination_name,started_at").single();
   if (insertError) return NextResponse.json({ error: insertError.message }, { status: 400 });
   return NextResponse.json({ trip, reused: false, ambulanceCode: ambulance.code });
 }
 
 export async function PATCH(request: NextRequest) {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (!allowRequest(`ambulance-trip-end:${ip}`, 10, 60_000)) {
+    return NextResponse.json({ error: "Too many trip-end requests. Try again shortly." }, { status: 429 });
+  }
+
   const { supabase, ambulance, error } = await getVerifiedAmbulance(request);
   if (error || !supabase || !ambulance) return error ?? NextResponse.json({ error: "Unable to end trip" }, { status: 500 });
   const { data: trip, error: updateError } = await supabase.from("emergency_trips").update({ status: "completed", ended_at: new Date().toISOString() }).eq("ambulance_id", ambulance.id).eq("status", "active").select("id,status,ended_at").single();
