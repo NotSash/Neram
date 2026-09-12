@@ -18,5 +18,7 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install
+      - name: Geospatial decision tests
+        run: npm run test --workspace Neram
       - name: Production build
         run: npm run build --workspace Neram
