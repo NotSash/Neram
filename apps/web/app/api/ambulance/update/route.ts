@@ -84,27 +84,19 @@ export async function POST(request: NextRequest) {
     const { data: trip } = await supabase.from("emergency_trips").select("id").eq("ambulance_id", ambulance.id).eq("status", "active").maybeSingle();
     if (!trip) return NextResponse.json({ error: "No active emergency trip" }, { status: 409 });
 
-    const { error: insertError } = await supabase.from("ambulance_locations").insert({
-      trip_id: trip.id,
-      ambulance_id: ambulance.id,
-      location: `SRID=4326;POINT(${body.longitude} ${body.latitude})`,
-      heading_degrees: typeof body.headingDegrees === "number" ? Math.max(0, Math.min(body.headingDegrees, 360)) : null,
-      speed_mps: speedMps,
-      accuracy_meters: accuracyMeters,
-    });
-    if (insertError) return NextResponse.json({ error: insertError.message }, { status: 400 });
-
-    const { data: decisionData, error: decisionError } = await supabase.rpc("process_verified_ambulance_update", {
+    const { data: result, error: updateError } = await supabase.rpc("record_verified_ambulance_update", {
       p_trip_id: trip.id,
       p_ambulance_id: ambulance.id,
       p_latitude: body.latitude,
       p_longitude: body.longitude,
       p_speed_mps: speedMps,
+      p_heading_degrees: typeof body.headingDegrees === "number" ? body.headingDegrees : null,
       p_accuracy_meters: accuracyMeters,
     });
-    if (decisionError) return NextResponse.json({ error: decisionError.message }, { status: 400 });
+    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 400 });
 
-    return NextResponse.json({ ambulanceId: ambulance.code, tripId: trip.id, decision: decisionData, mode: "verified", receivedAt: new Date().toISOString() });
+    const decision = (result as { decision?: unknown } | null)?.decision ?? null;
+    return NextResponse.json({ ambulanceId: ambulance.code, tripId: trip.id, decision, mode: "verified", receivedAt: new Date().toISOString() });
   } catch (error) {
     console.error("Neram ambulance update error", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to process update" }, { status: 400 });
