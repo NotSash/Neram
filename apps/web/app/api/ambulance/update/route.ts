@@ -19,19 +19,57 @@ function supabaseFromRequest(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!allowRequest(`ambulance-update:${ip}`)) return NextResponse.json({ error: "Too many updates. Try again shortly." }, { status: 429 });
+  if (!allowRequest(`ambulance-update:${ip}`, 120, 60_000)) {
+    return NextResponse.json({ error: "Too many updates. Try again shortly." }, { status: 429 });
+  }
 
   try {
-    const body = (await request.json()) as { latitude?: number; longitude?: number; speedMps?: number | null; headingDegrees?: number | null; gpsQuality?: string | null };
-    if (typeof body.latitude !== "number" || typeof body.longitude !== "number" || !Number.isFinite(body.latitude) || !Number.isFinite(body.longitude) || !isChennaiCoordinate(body.latitude, body.longitude)) {
+    const body = (await request.json()) as {
+      latitude?: number;
+      longitude?: number;
+      speedMps?: number | null;
+      headingDegrees?: number | null;
+      accuracyMeters?: number | null;
+      gpsQuality?: string | null;
+    };
+
+    if (
+      typeof body.latitude !== "number" ||
+      typeof body.longitude !== "number" ||
+      !Number.isFinite(body.latitude) ||
+      !Number.isFinite(body.longitude) ||
+      !isChennaiCoordinate(body.latitude, body.longitude)
+    ) {
       return NextResponse.json({ error: "Valid Chennai latitude and longitude are required" }, { status: 400 });
     }
-    const speedMps = typeof body.speedMps === "number" && Number.isFinite(body.speedMps) ? Math.max(0, Math.min(body.speedMps, 80)) : 13.9;
+
+    const speedMps = typeof body.speedMps === "number" && Number.isFinite(body.speedMps)
+      ? Math.max(0, Math.min(body.speedMps, 80))
+      : 13.9;
+    const accuracyMeters = typeof body.accuracyMeters === "number" && Number.isFinite(body.accuracyMeters)
+      ? Math.max(1, Math.min(body.accuracyMeters, 500))
+      : body.gpsQuality === "good" ? 20 : 60;
+
+    if (accuracyMeters > 100) {
+      return NextResponse.json({ error: "GPS accuracy is too poor for an operational update" }, { status: 422 });
+    }
+
     const mode = request.nextUrl.searchParams.get("mode");
 
     if (mode === "demo") {
-      const decision = evaluateSignalAlert(DEMO_ROUTE, { latitude: body.latitude, longitude: body.longitude }, DEMO_SIGNALS, speedMps, 500);
-      return NextResponse.json({ ambulanceId: "AMB-DEMO-01", decision, mode: getOperationalMode(), receivedAt: new Date().toISOString() });
+      const decision = evaluateSignalAlert(
+        DEMO_ROUTE,
+        { latitude: body.latitude, longitude: body.longitude },
+        DEMO_SIGNALS,
+        speedMps,
+        500,
+      );
+      return NextResponse.json({
+        ambulanceId: "AMB-DEMO-01",
+        decision,
+        mode: getOperationalMode(),
+        receivedAt: new Date().toISOString(),
+      });
     }
 
     const supabase = supabaseFromRequest(request);
@@ -46,7 +84,14 @@ export async function POST(request: NextRequest) {
     const { data: trip } = await supabase.from("emergency_trips").select("id").eq("ambulance_id", ambulance.id).eq("status", "active").maybeSingle();
     if (!trip) return NextResponse.json({ error: "No active emergency trip" }, { status: 409 });
 
-    const { error: insertError } = await supabase.from("ambulance_locations").insert({ trip_id: trip.id, ambulance_id: ambulance.id, location: `SRID=4326;POINT(${body.longitude} ${body.latitude})`, heading_degrees: typeof body.headingDegrees === "number" ? body.headingDegrees : null, speed_mps: speedMps, accuracy_meters: typeof body.gpsQuality === "string" && body.gpsQuality === "good" ? 20 : 60 });
+    const { error: insertError } = await supabase.from("ambulance_locations").insert({
+      trip_id: trip.id,
+      ambulance_id: ambulance.id,
+      location: `SRID=4326;POINT(${body.longitude} ${body.latitude})`,
+      heading_degrees: typeof body.headingDegrees === "number" ? Math.max(0, Math.min(body.headingDegrees, 360)) : null,
+      speed_mps: speedMps,
+      accuracy_meters: accuracyMeters,
+    });
     if (insertError) return NextResponse.json({ error: insertError.message }, { status: 400 });
 
     const { data: decisionData, error: decisionError } = await supabase.rpc("process_verified_ambulance_update", {
@@ -55,7 +100,7 @@ export async function POST(request: NextRequest) {
       p_latitude: body.latitude,
       p_longitude: body.longitude,
       p_speed_mps: speedMps,
-      p_accuracy_meters: typeof body.gpsQuality === "string" && body.gpsQuality === "good" ? 20 : 60,
+      p_accuracy_meters: accuracyMeters,
     });
     if (decisionError) return NextResponse.json({ error: decisionError.message }, { status: 400 });
 
