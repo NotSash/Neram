@@ -11,6 +11,12 @@ function supabaseFromRequest(request: NextRequest) {
   return createClient(url, key, { global: { headers: { Authorization: authorization } } });
 }
 
+function compassDirection(bearing: number | null) {
+  if (bearing === null || !Number.isFinite(bearing)) return "Unknown direction";
+  const directions = ["North", "North-east", "East", "South-east", "South", "South-west", "West", "North-west"];
+  return directions[Math.round(((bearing % 360) + 360) % 360 / 45) % 8];
+}
+
 export async function GET(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (!allowRequest(`police-alerts:${ip}`, 30, 60_000)) {
@@ -30,9 +36,16 @@ export async function GET(request: NextRequest) {
   const { data: profile, error: profileError } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
   if (profileError || profile?.role !== "police") return NextResponse.json({ error: "Police operator role required" }, { status: 403 });
 
+  const now = new Date().toISOString();
+  await supabase
+    .from("alerts")
+    .update({ status: "expired", cleared_at: now })
+    .in("status", ["pending", "acknowledged"])
+    .lte("expires_at", now);
+
   const { data: rows, error } = await supabase
     .from("alerts")
-    .select("id,status,eta_seconds,distance_meters,confidence,triggered_at,signal_id,ambulance_id:trip_id,police_unit_id")
+    .select("id,status,eta_seconds,distance_meters,approach_bearing_degrees,confidence,triggered_at,signal_id,ambulance_id:trip_id,police_unit_id,expires_at")
     .in("status", ["pending", "acknowledged"])
     .order("triggered_at", { ascending: false })
     .limit(10);
@@ -56,8 +69,10 @@ export async function GET(request: NextRequest) {
     status: row.status,
     etaSeconds: row.eta_seconds ?? 0,
     distanceMeters: Math.round(row.distance_meters ?? 0),
-    approach: "Assigned route",
+    approach: compassDirection(row.approach_bearing_degrees ?? null),
+    approachBearingDegrees: row.approach_bearing_degrees ?? null,
     gpsQuality: (row.confidence ?? 0) >= 0.8 ? "good" : "degraded",
+    expiresAt: row.expires_at,
   }));
 
   return NextResponse.json({ mode: "verified", generatedAt: new Date().toISOString(), alerts });
