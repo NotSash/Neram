@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+// Node's built-in test runner executes this TypeScript file directly with --experimental-strip-types.
+// @ts-ignore TS5097 is specific to the test runner import and does not affect the production bundle.
 import { evaluateSignalAlert, findUpcomingSignal } from "./geo.ts";
 
 const route = [
